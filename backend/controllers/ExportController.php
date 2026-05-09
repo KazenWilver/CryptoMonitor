@@ -39,6 +39,7 @@ class ExportController {
     }
 
     public function exportWatchlist(Request $request): void {
+        $format = $request->getQuery('format', 'csv');
         $userId = $request->user['id'];
         $items = $this->watchlistRepo->findByUserId($userId);
 
@@ -48,10 +49,15 @@ class ExportController {
             $rows[] = [$item['crypto_name'], $item['crypto_symbol'], $item['crypto_id'], $item['added_at']];
         }
 
-        $this->exportService->exportCSV($userId, 'watchlist', $rows, $headers);
+        if ($format === 'pdf') {
+            $this->exportService->exportPDF($userId, 'watchlist', $rows, $headers, 'Relatório de Favoritos');
+        } else {
+            $this->exportService->exportCSV($userId, 'watchlist', $rows, $headers);
+        }
     }
 
     public function exportTransactions(Request $request): void {
+        $format = $request->getQuery('format', 'csv');
         $userId = $request->user['id'];
         $txs = $this->portfolioRepo->findByUserId($userId);
 
@@ -69,6 +75,10 @@ class ExportController {
             ];
         }
 
-        $this->exportService->exportCSV($userId, 'transactions', $rows, $headers);
+        if ($format === 'pdf') {
+            $this->exportService->exportPDF($userId, 'transactions', $rows, $headers, 'Relatório de Transações');
+        } else {
+            $this->exportService->exportCSV($userId, 'transactions', $rows, $headers);
+        }
     }
 }
