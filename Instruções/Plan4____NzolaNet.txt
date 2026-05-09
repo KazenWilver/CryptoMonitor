@@ -1,0 +1,300 @@
+## 1. Análise estrita do enunciado (Lab #04)
+
+O PDF define, sem ambiguidade, as seguintes exigências:
+
+| Item | Exigência textual direta |
+|------|--------------------------|
+| **Tecnologias** | Frontend **Angular**, backend **PHP puro**, base de dados **SQL relacional**, comunicação **HTTP + JSON** |
+| **Autenticação** | Registo, login, logout, recuperação de senha – completo |
+| **Base de dados** | ≥ 3 tabelas, operações CRUD |
+| **API externa** | Pelo menos uma, *quando aplicável* (neste sistema é claramente aplicável) |
+| **Interface** | Responsiva |
+| **Tema** | Modo claro e modo escuro, com alternância funcional |
+| **Idiomas** | Múltiplos idiomas (mínimo 2) |
+| **Exportação** | CSV ou PDF de dados/relatórios |
+| **Tipos de utilizador** | Apenas se a natureza do problema o justificar |
+| **Organização de código** | Frontend: componentes reutilizáveis, módulos, separação interface/lógica/serviços. Backend: separação lógica de negócio, acesso a dados e endpoints |
+| **Versionamento** | GitHub, histórico de commits, autoria clara |
+
+Nenhum outro requisito tecnológico ou funcional é imposto. *Não há menção a web scraping, nem exigência de IA como funcionalidade do sistema.* O uso de IA citado refere‑se ao **processo de desenvolvimento assistido**, não ao produto final.
+
+---
+
+## 2. Escopo funcional do Sistema de Monitoramento de Criptomoedas
+
+Funcionalidades definidas (todas sustentadas nos requisitos obrigatórios):
+
+1. **Autenticação** – registo, login, logout, recuperação de senha via email.
+2. **Dashboard** – listagem das principais criptomoedas (preço, variação 24h, market cap) obtidas da API externa, com pesquisa por nome/símbolo.
+3. **Detalhe de uma criptomoeda** – gráfico simples de variação, dados de mercado.
+4. **Watchlist pessoal** – CRUD de favoritos (adicionar/remover moedas). Cada utilizador gere a sua lista.
+5. **Alertas de preço** – criação, edição, remoção de alertas (preço alvo, direção). *(Esta funcionalidade garante uma terceira tabela com operações CRUD, além de users e watchlist.)*
+6. **Exportação** – download da watchlist em CSV (ou PDF).
+7. **Preferências** – alternância claro/escuro e seleção de idioma (PT/EN), guardadas localmente.
+
+**Justificação para NÃO incluir tipos de utilizador:**  
+O sistema é de uso pessoal. Não há operações administrativas que justifiquem uma separação de papéis. A omissão é intencional e coerente com o enunciado.
+
+---
+
+## 3. API externa escolhida
+
+**CoinGecko API v3** (gratuita, sem chave obrigatória para os endpoints de mercado e detalhe).  
+- Endpoints: `/coins/markets`, `/coins/{id}`, `/simple/price`  
+- Limites generosos (~10–30 chamadas/minuto sem chave).  
+- Dados fiáveis e bem estruturados.  
+*(Não recorremos a web scraping – ver secção 11)*
+
+---
+
+## 4. Arquitetura geral
+
+```
+[Angular SPA] ---(HTTP/JSON)---> [PHP Backend (REST)] ---(HTTP)---> [CoinGecko API]
+                                     |        |
+                                  [MySQL]   [Email (SMTP)]
+```
+
+- O frontend **não comunica diretamente com a API externa**. O backend atua como proxy, centralizando caching e evitando exposição de chaves (se viessem a ser usadas).
+- Autenticação via **JWT** (stateless).
+- Backend organizado em camadas: **endpoints (controllers) → lógica de negócio (services) → acesso a dados (models/DB)**.
+
+---
+
+## 5. Estrutura de pastas e ficheiros
+
+### 5.1 Frontend – Angular
+
+```
+src/
+├── app/
+│   ├── core/                        # Serviços, guards, interceptors globais
+│   │   ├── guards/
+│   │   │   └── auth.guard.ts
+│   │   ├── interceptors/
+│   │   │   ├── jwt.interceptor.ts
+│   │   │   └── error.interceptor.ts
+│   │   ├── services/
+│   │   │   ├── auth.service.ts
+│   │   │   ├── theme.service.ts
+│   │   │   └── language.service.ts
+│   │   └── models/
+│   │       ├── user.model.ts
+│   │       ├── coin.model.ts
+│   │       └── alert.model.ts
+│   ├── shared/                      # Componentes reutilizáveis
+│   │   ├── components/
+│   │   │   ├── header/
+│   │   │   ├── footer/
+│   │   │   ├── loader/
+│   │   │   ├── confirm-dialog/
+│   │   │   └── theme-toggle/
+│   │   └── pipes/
+│   │       └── price-format.pipe.ts
+│   ├── features/                    # Módulos de funcionalidade
+│   │   ├── auth/
+│   │   │   ├── auth.module.ts
+│   │   │   ├── login/
+│   │   │   ├── register/
+│   │   │   ├── forgot-password/
+│   │   │   └── reset-password/
+│   │   ├── dashboard/
+│   │   │   ├── dashboard.module.ts
+│   │   │   ├── market-overview/
+│   │   │   └── coin-search/
+│   │   ├── coin-detail/
+│   │   │   ├── coin-detail.module.ts
+│   │   │   └── coin-detail/         # componente standalone ou componente principal
+│   │   ├── watchlist/
+│   │   │   ├── watchlist.module.ts
+│   │   │   └── watchlist/           # (lista, botão exportar)
+│   │   └── alerts/
+│   │       ├── alerts.module.ts
+│   │       └── alerts/              # (lista, formulário de criação/edição)
+│   ├── app-routing.module.ts
+│   ├── app.component.ts
+│   └── app.module.ts
+├── assets/
+│   ├── i18n/
+│   │   ├── pt.json
+│   │   └── en.json
+│   └── images/
+├── environments/
+└── styles.scss                      # Bootstrap + variáveis de tema
+```
+
+**Princípios aplicados:**  
+- Cada `feature` tem o seu módulo (lazy loading).  
+- Serviços globais em `core`. Componentes sem lógica de negócio em `shared`.  
+- Modelos de dados separados, facilitando tipagem.  
+- Interceptor JWT anexa o token automaticamente.  
+- Guard de autenticação protege rotas privadas.
+
+### 5.2 Backend – PHP puro
+
+```
+backend/
+├── public/
+│   ├── index.php                    # Front controller
+│   ├── .htaccess                    # Rewrite para index.php
+│   └── assets/
+├── src/
+│   ├── Config/
+│   │   ├── database.php
+│   │   ├── app.php                  # JWT secret, email settings
+│   │   └── cors.php
+│   ├── Controllers/
+│   │   ├── AuthController.php
+│   │   ├── CryptoController.php
+│   │   ├── WatchlistController.php
+│   │   ├── AlertController.php
+│   │   └── ExportController.php
+│   ├── Models/
+│   │   ├── User.php
+│   │   ├── Watchlist.php
+│   │   ├── Alert.php
+│   │   └── PasswordReset.php
+│   ├── Services/
+│   │   ├── AuthService.php          # Registo, login, recuperação
+│   │   ├── CryptoService.php        # Proxy para CoinGecko
+│   │   ├── WatchlistService.php
+│   │   ├── AlertService.php
+│   │   └── EmailService.php
+│   ├── Middleware/
+│   │   └── AuthMiddleware.php       # Verifica JWT
+│   └── Helpers/
+│       ├── Response.php             # JSON padronizado
+│       ├── JWT.php                  # (ou usa firebase/php-jwt)
+│       └── Validator.php
+├── vendor/                          # Composer
+├── composer.json
+└── .env                             # Credenciais (não versionado)
+```
+
+**Camadas:**  
+- **Controllers** recebem a requisição, chamam o Service adequado e devolvem resposta JSON.  
+- **Services** contêm a regra de negócio (ex.: verificar se alerta foi atingido).  
+- **Models** executam consultas parametrizadas (PDO, sem ORM).  
+- **Helpers** padronizam respostas e tratam tokens.
+
+---
+
+## 6. Base de dados (MySQL/MariaDB)
+
+### 6.1 Tabelas e relacionamentos
+
+```sql
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    language ENUM('pt','en') DEFAULT 'pt',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE watchlist (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    coin_id VARCHAR(50) NOT NULL,               -- ex.: 'bitcoin'
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_coin (user_id, coin_id)
+);
+
+CREATE TABLE alerts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    coin_id VARCHAR(50) NOT NULL,
+    target_price DECIMAL(18, 8) NOT NULL,
+    direction ENUM('above', 'below') NOT NULL,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE password_resets (
+    email VARCHAR(100) NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_email (email)
+);
+```
+
+- **≥3 tabelas**: users, watchlist, alerts (4 com password_resets).  
+- **CRUD**: users (registo, update), watchlist (add, list, delete), alerts (create, read, update, delete).  
+- Integridade referencial com chaves estrangeiras.
+
+---
+
+## 7. Checklist de requisitos obrigatórios
+
+| Requisito | Como será cumprido |
+|-----------|-------------------|
+| **Autenticação completa** | Endpoints PHP: `register`, `login`, `forgot-password`, `reset-password`. JWT + email via PHPMailer. |
+| **≥3 tabelas + CRUD** | users, watchlist, alerts. Cada uma com rotas REST adequadas. |
+| **API externa** | CoinGecko via `CryptoService.php` (proxy). |
+| **Interface responsiva** | Bootstrap 5 + classes utilitárias. |
+| **Modo claro/escuro** | `ThemeService` toggla classe `light`/`dark` no `body`. Variáveis CSS definidas em `styles.scss`. |
+| **Múltiplos idiomas** | `ngx-translate`, ficheiros `pt.json` e `en.json` em `assets/i18n`. Switcher no header. |
+| **Exportação CSV** | `ExportController` consulta watchlist e gera CSV com `fputcsv()`. Download via endpoint. |
+| **Componentes reutilizáveis** | `shared/components/` (header, footer, loader, theme-toggle) e pipes. |
+| **Separação backend** | Controllers → Services → Models. Zero lógica SQL nos controllers. |
+| **Lazy loading** | Módulos de feature carregados sob demanda. |
+| **Versionamento** | Repositório individual, commits frequentes e descritivos. |
+
+*(Opcional: PDF — se pretendido, usa‑se Dompdf no backend; mas o CSV já satisfaz o requisito.)*
+
+---
+
+## 8. Navegação e rotas
+
+**Rotas públicas:**  
+- `/login`, `/register`, `/forgot-password`, `/reset-password`
+
+**Rotas protegidas (AuthGuard):**  
+- `/dashboard` — visão geral de mercado  
+- `/coin/:id` — detalhe da moeda  
+- `/watchlist` — lista de favoritos  
+- `/alerts` — gestão de alertas  
+- `/export/watchlist` — download CSV
+
+**Estrutura de menu (header):**  
+Dashboard | Watchlist | Alertas  
+[alternância de tema] [seletor de idioma] [logout]
+
+---
+
+## 9. Exportação de dados
+
+- Endpoint `GET /api/export/watchlist?format=csv` retorna `Content-Type: text/csv`.  
+- O `ExportController` busca a watchlist do utilizador autenticado e monta as linhas.  
+- No frontend, um botão “Exportar CSV” faz `window.open(apiUrl)` para iniciar o download.
+
+---
+
+## 10. Internacionalização e temas
+
+- **ngx-translate** carrega os ficheiros da pasta `assets/i18n/`.  
+- No registo, o utilizador escolhe o idioma preferido (campo `language` na tabela `users`).  
+- O tema é guardado em `localStorage`; o serviço `ThemeService` aplica a classe `dark-theme` ao `<body>`, e todas as cores são derivadas de variáveis CSS.
+
+---
+
+## 11. Web scraping e funcionalidades de IA
+
+- **Web scraping**: não será usado. O enunciado pede integração com API externa e o CoinGecko oferece uma API pública robusta. Scraping viola termos de serviço, não é fiável e desrespeita o princípio de engenharia limpa.  
+- **IA no sistema final**: não é exigida. O documento refere “desenvolvimento assistido por IA”, ou seja, apoio durante a codificação. **Adicionar uma funcionalidade de IA (ex.: previsão de preços) seria uma extensão opcional não requerida**, que não substitui nenhum dos requisitos obrigatórios. Caso o grupo deseje incluí‑la, pode‑o fazer como *extra*, mas a entrega base não depende disso.  
+
+---
+
+## 12. Verificação final de consistência
+
+- Todos os requisitos explícitos do PDF foram cobertos.  
+- Não foi adicionada nenhuma tecnologia ou restrição não mencionada.  
+- O sistema proposto é modular, implementável e cumpre integralmente as regras do laboratório.  
+- A ausência de papéis de utilizador está justificada.  
+- A navegação e a estrutura de pastas respeitam a separação de responsabilidades exigida.
+
+**A estrutura está pronta para ser implementada por si, respeitando o prazo de 10 de maio de 2026 para o primeiro conjunto.**

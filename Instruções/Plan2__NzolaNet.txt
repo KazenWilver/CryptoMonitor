@@ -1,0 +1,1208 @@
+Abaixo vai uma leitura fiel do **Lab #04** e, depois, uma proposta **completa e implementável** para o **Sistema de Monitoramento de Criptomoedas**, sem extrapolar o que o PDF não diz. Onde algo não está explicitamente definido, marco como **[bloqueado]** ou como **[pressuposto]**. 
+
+## 1) O que o Lab 4 realmente exige
+
+O laboratório não é só “fazer sites”; ele avalia sobretudo **qualidade estrutural**, **organização do código**, **separação de responsabilidades**, **reutilização**, **modularidade** e **uso crítico de IA** como apoio ao desenvolvimento, não como substituto do raciocínio técnico. 
+
+Também existe uma exigência organizacional forte: o trabalho é em **grupos de até 4 elementos**, com **8 sistemas no total** por grupo: **4 do primeiro conjunto** e **4 do segundo conjunto**. Cada elemento deve ser responsável por **um sistema de cada conjunto**, e essa responsabilidade tem de ficar visível no **histórico de commits do GitHub**. A não entrega completa, sem justificação aceita, implica **nota zero** para o grupo. 
+
+Para o teu caso, o tema escolhido — **Sistema de Monitoramento de Criptomoedas** — pertence ao **primeiro conjunto**. O PDF também diz que há liberdade na definição das funcionalidades específicas, desde que o sistema seja **utilizável**, **coerente** e com **fluxo lógico consistente**, resolvendo um problema real dentro do tema. 
+
+## 2) Requisitos obrigatórios que o sistema tem de cumprir
+
+Independentemente da funcionalidade escolhida, o sistema precisa obrigatoriamente de:
+
+* **autenticação completa**: registo, login, logout e recuperação de senha;
+* **base de dados relacional** com pelo menos **3 tabelas** e suporte a **CRUD**;
+* integração com **pelo menos uma API externa**, quando aplicável;
+* **interface responsiva**;
+* **modo claro e modo escuro**, com alternância funcional;
+* suporte a **múltiplos idiomas** com mínimo de **2 línguas**;
+* funcionalidade de **exportação de dados ou relatórios** em **CSV ou PDF**. 
+
+Quando a natureza do sistema justificar, também deve haver:
+
+* distinção entre tipos de utilizadores;
+* permissões diferenciadas de acesso e operação. 
+
+E a stack não pode fugir ao que o PDF definiu: **Angular no frontend**, **PHP puro no backend**, **SQL relacional**, e comunicação via **HTTP com JSON**. No frontend, o uso de **componentes reutilizáveis**, **módulos** e separação entre **interface / lógica / serviços** deve ficar evidente. No backend, tem de existir separação entre **lógica de negócio**, **acesso a dados** e **endpoints**. 
+
+## 3) Leitura técnica do tema “Monitoramento de Criptomoedas”
+
+O PDF não impõe funcionalidades específicas para este tema; ele permite liberdade, desde que o sistema seja coerente e útil. 
+
+Para este tema, a estrutura mais natural e consistente é esta:
+
+* painel com preços e variação das criptomoedas;
+* detalhe de cada moeda;
+* lista de favoritos / watchlist;
+* alertas de preço;
+* filtros por moeda, mercado ou variação;
+* exportação de relatórios;
+* preferências do utilizador;
+* histórico de dados consultados.
+
+Isto encaixa bem no objetivo do laboratório porque produz um sistema real, útil e com fluxo lógico claro: autentica-se o utilizador, escolhem-se moedas, observa-se o mercado, configuram-se alertas, e exportam-se relatórios. Essa escolha é uma **proposta técnica**, não uma exigência explícita do PDF. 
+
+## 4) Estrutura completa recomendada do sistema
+
+### 4.1 Organização do repositório
+
+Uma organização limpa e consistente seria:
+
+```text
+crypto-monitoring-system/
+├─ frontend/
+│  ├─ src/
+│  │  ├─ app/
+│  │  │  ├─ core/
+│  │  │  ├─ shared/
+│  │  │  ├─ features/
+│  │  │  │  ├─ auth/
+│  │  │  │  ├─ dashboard/
+│  │  │  │  ├─ cryptocurrencies/
+│  │  │  │  ├─ watchlist/
+│  │  │  │  ├─ alerts/
+│  │  │  │  ├─ reports/
+│  │  │  │  └─ settings/
+│  │  │  ├─ layouts/
+│  │  │  ├─ services/
+│  │  │  ├─ guards/
+│  │  │  ├─ interceptors/
+│  │  │  ├─ models/
+│  │  │  └─ app-routing.module.ts
+│  │  ├─ assets/
+│  │  ├─ environments/
+│  │  └─ styles/
+│  └─ angular.json
+├─ backend/
+│  ├─ public/
+│  │  └─ index.php
+│  ├─ app/
+│  │  ├─ Controllers/
+│  │  ├─ Services/
+│  │  ├─ Repositories/
+│  │  ├─ Models/
+│  │  ├─ Middleware/
+│  │  ├─ Validators/
+│  │  └─ Helpers/
+│  ├─ config/
+│  ├─ routes/
+│  ├─ database/
+│  │  ├─ migrations/
+│  │  └─ seeds/
+│  └─ storage/
+├─ docs/
+│  ├─ database.sql
+│  └─ technical-report.md
+└─ README.md
+```
+
+Isto respeita exatamente a exigência do lab de **organização clara**, **reutilização** e **separação de responsabilidades**. 
+
+### 4.2 Frontend Angular
+
+A divisão mais correta é:
+
+* **core/**: serviços globais, auth, interceptors, guards, config;
+* **shared/**: componentes reutilizáveis, pipes e diretivas;
+* **features/**: cada funcionalidade isolada por módulo/domínio;
+* **layouts/**: estrutura visual base;
+* **services/**: integração com backend e API externa;
+* **models/**: contratos de dados;
+* **guards/** e **interceptors/**: controlo de acesso e tratamento HTTP.
+
+Componentes reutilizáveis recomendados:
+
+* `app-navbar`
+* `app-sidebar`
+* `app-theme-toggle`
+* `app-language-switcher`
+* `app-stat-card`
+* `app-crypto-table`
+* `app-price-chart`
+* `app-empty-state`
+* `app-confirm-dialog`
+* `app-loading-spinner`
+
+### 4.3 Backend PHP puro
+
+Separação recomendada:
+
+* **Controllers**: recebem request e devolvem JSON;
+* **Services**: regras de negócio;
+* **Repositories**: acesso a dados SQL;
+* **Models**: representação dos dados;
+* **Middleware**: autenticação, autorização, CORS, validações transversais;
+* **Validators**: validação de payload;
+* **Helpers**: utilitários de resposta, datas, formatação.
+
+Fluxo ideal:
+
+`Angular -> HTTP JSON -> PHP Controller -> Service -> Repository -> SQL -> Response JSON`
+
+Isto está alinhado com a exigência do lab de separação entre **endpoints**, **lógica de negócio** e **acesso a dados**. 
+
+---
+
+## 5) Base de dados relacional proposta
+
+O PDF exige pelo menos 3 tabelas; aqui faz sentido desenhar uma estrutura normalizada, sem redundância desnecessária. 
+
+### 5.1 Tabelas principais
+
+#### `users`
+
+Guarda contas, autenticação e preferências.
+
+Campos sugeridos:
+
+* `id`
+* `name`
+* `email` (único)
+* `password_hash`
+* `role`
+* `preferred_language`
+* `theme`
+* `created_at`
+* `updated_at`
+
+#### `cryptocurrencies`
+
+Catálogo de moedas monitoradas.
+
+Campos sugeridos:
+
+* `id`
+* `symbol`
+* `name`
+* `slug`
+* `logo_url`
+* `is_active`
+* `created_at`
+* `updated_at`
+
+#### `crypto_prices`
+
+Histórico temporal dos preços.
+
+Campos sugeridos:
+
+* `id`
+* `cryptocurrency_id` (FK)
+* `price_usd`
+* `market_cap`
+* `volume_24h`
+* `change_24h`
+* `captured_at`
+
+### 5.2 Tabelas de apoio
+
+#### `watchlists`
+
+Moedas seguidas por cada utilizador.
+
+Campos:
+
+* `id`
+* `user_id` (FK)
+* `cryptocurrency_id` (FK)
+* `created_at`
+
+Constraint importante:
+
+* `UNIQUE(user_id, cryptocurrency_id)`
+
+#### `alerts`
+
+Alertas configurados pelo utilizador.
+
+Campos:
+
+* `id`
+* `user_id` (FK)
+* `cryptocurrency_id` (FK)
+* `target_price`
+* `condition_type`
+* `is_active`
+* `triggered_at`
+* `created_at`
+
+#### `export_logs`
+
+Registo de exportações.
+
+Campos:
+
+* `id`
+* `user_id` (FK)
+* `report_type`
+* `format`
+* `created_at`
+
+### 5.3 Relacionamentos
+
+* `users 1:N watchlists`
+* `users 1:N alerts`
+* `users 1:N export_logs`
+* `cryptocurrencies 1:N crypto_prices`
+* `cryptocurrencies 1:N watchlists`
+* `cryptocurrencies 1:N alerts`
+
+### 5.4 Normalização
+
+A estrutura acima fica essencialmente em **3FN**:
+
+* dados do utilizador não se repetem em watchlists/alerts;
+* dados da moeda ficam numa tabela única;
+* preços históricos ficam separados do catálogo de moedas;
+* relações N:N são resolvidas por tabelas intermédias.
+
+Isto reduz redundância e facilita manutenção, que é exatamente o tipo de qualidade estrutural que o lab valoriza. 
+
+---
+
+## 6) Funcionalidades recomendadas do sistema
+
+Estas funcionalidades são **propostas coerentes** com o tema; o PDF permite liberdade na definição funcional. 
+
+### Módulo público/autenticação
+
+* registo;
+* login;
+* logout;
+* recuperação de senha;
+* validação de email;
+* redefinição de password.
+
+### Dashboard
+
+* visão geral do mercado;
+* cartões com métricas principais;
+* top ganhos/perdas;
+* moedas em watchlist;
+* alertas recentes.
+
+### Criptomoedas
+
+* listar;
+* pesquisar;
+* ver detalhe;
+* favoritar;
+* comparar moedas.
+
+### Alertas
+
+* criar alerta;
+* editar;
+* ativar/desativar;
+* ver histórico de disparos.
+
+### Relatórios
+
+* exportar CSV;
+* exportar PDF;
+* histórico de exportações.
+
+### Configurações
+
+* idioma;
+* tema claro/escuro;
+* preferências pessoais.
+
+---
+
+## 7) APIs externas: o que faz sentido usar
+
+O PDF só exige que exista **pelo menos uma API externa, quando aplicável**. Para um sistema de criptomoedas, isso faz sentido e é praticamente central. 
+
+### Recomendação prática
+
+Usar uma API externa para:
+
+* preços em tempo real;
+* capitalização de mercado;
+* volume;
+* variação 24h;
+* histórico.
+
+### Melhor abordagem técnica
+
+Para este sistema, eu recomendaria **uma API pública e estável de dados de mercado** como fonte principal. Se quiseres enriquecer o sistema, podes acrescentar:
+
+* uma segunda API para notícias;
+* uma terceira para conversões cambiais, caso o sistema tenha suporte a moedas fiduciárias.
+
+### Observação importante
+
+Como o PDF não fixa uma API específica, a escolha exata da API é uma **decisão técnica do projeto**, não uma regra do laboratório.
+
+---
+
+## 8) Web scraping: permitido ou não?
+
+**[bloqueado]** O PDF **não menciona scraping de forma explícita**, portanto não dá para afirmar que está autorizado como parte do projeto. O que o lab exige explicitamente é **integração com API externa**, quando aplicável. 
+
+### Recomendação técnica
+
+A melhor abordagem é:
+
+* usar **API oficial ou pública** como fonte primária;
+* evitar scraping como dependência central;
+* usar scraping apenas como **fallback experimental**, se houver permissão explícita do site alvo e isso não violar os termos do serviço.
+
+Para um projeto académico, a opção mais segura, estável e defendível na apresentação é **API**.
+
+---
+
+## 9) IA no projeto: é necessária?
+
+O PDF diz que o desenvolvimento será feito com **assistência de ferramentas de Inteligência Artificial**, mas deixa claro que isso é para apoio crítico ao desenvolvimento, não uma obrigação de colocar IA como funcionalidade do sistema. 
+
+### Conclusão
+
+* **IA no processo de desenvolvimento:** sim, é parte do lab.
+* **IA como feature do sistema:** **não é obrigatória**.
+
+### Se quiseres adicionar uma feature de IA
+
+A funcionalidade mais coerente seria algo como:
+
+* resumo inteligente de notícias;
+* explicação de variações bruscas;
+* assistente de leitura de mercado;
+* sugestão de moedas com base no watchlist do utilizador.
+
+### Decisão recomendada
+
+Para este lab, eu trataria IA no sistema como **opcional**. O foco principal deve continuar em:
+
+* arquitetura limpa;
+* CRUD sólido;
+* autenticação;
+* API externa;
+* exportação;
+* organização;
+* responsividade;
+* dark mode;
+* i18n.
+
+---
+
+## 10) Tipo de utilizadores e permissões
+
+O PDF diz que isso só deve existir quando a natureza do problema o justificar. Neste tema, faz sentido existir pelo menos:
+
+### Utilizador normal
+
+* gerir perfil;
+* ver mercado;
+* criar watchlist;
+* configurar alertas;
+* exportar relatórios.
+
+### Admin [opcional, mas justificável]
+
+* gerir moedas suportadas;
+* gerir fontes/API/configuração;
+* ver logs;
+* moderar conteúdo ou dados internos.
+
+Se o sistema for simples, podes até manter apenas um tipo de utilizador funcional e resolver a diferença por permissões internas mínimas. Mas, para um sistema mais robusto, **admin + utilizador** é a solução mais coerente.
+
+---
+
+## 11) Plano de implementação recomendado
+
+### Fase 1 — fundação
+
+* modelar base de dados;
+* criar backend PHP com rotas JSON;
+* implementar auth completa;
+* criar frontend Angular base;
+* configurar tema claro/escuro;
+* configurar idiomas;
+* criar layout principal.
+
+### Fase 2 — núcleo do sistema
+
+* integrar API externa;
+* construir dashboard;
+* listar criptomoedas;
+* detalhe de moeda;
+* watchlist;
+* alertas.
+
+### Fase 3 — qualidade e entrega
+
+* exportação CSV/PDF;
+* validações;
+* testes funcionais;
+* revisão de commits;
+* documentação técnica;
+* limpeza final do código.
+
+Isto encaixa bem com a lógica do lab, que valoriza evolução progressiva, organização e clareza de autoria no GitHub. 
+
+---
+
+## 12) Itens que ficam [bloqueados] ou dependentes de decisão externa
+
+### [bloqueado] API exata a usar
+
+O PDF não define qual API deve ser usada. Só exige pelo menos uma API externa, quando aplicável. 
+
+### [bloqueado] Permissão explícita para scraping
+
+O PDF não autoriza nem proíbe scraping de forma explícita. 
+
+### [bloqueado] Idiomas obrigatórios
+
+O PDF exige mínimo de 2 línguas, mas não especifica quais. 
+
+### [bloqueado] Tipo de autenticação
+
+O PDF exige autenticação completa, mas não fixa se deve ser JWT, sessão, cookie ou outro mecanismo. 
+
+### [bloqueado] Biblioteca de PDF/CSV
+
+O PDF exige exportação, mas não define a biblioteca a usar. 
+
+---
+
+## 13) Verificação final de coerência com o Lab 4
+
+A proposta acima respeita o que o lab pede porque:
+
+* usa **Angular + PHP puro + SQL**; 
+* prevê **HTTP + JSON** entre frontend e backend; 
+* inclui **auth completa**; 
+* prevê **CRUD** e BD relacional com mais de 3 tabelas; 
+* integra **API externa**; 
+* inclui **responsive**, **dark mode**, **multi-idioma** e **exportação**; 
+* mantém **separação de responsabilidades** no frontend e backend; 
+* está alinhada com a liberdade funcional concedida pelo PDF para cada sistema. 
+
+-----------------------------------------
+
+# Plano Técnico Final — Sistema de Monitoramento de Criptomoedas
+
+Estrutura projetada para cumprir rigorosamente o Lab #04:
+
+* Angular frontend;
+* PHP puro backend;
+* SQL relacional;
+* HTTP + JSON;
+* separação de responsabilidades;
+* componentes reutilizáveis;
+* modularidade;
+* organização limpa;
+* integração com API externa;
+* autenticação completa;
+* dark/light mode;
+* multi-idioma;
+* exportação CSV/PDF. 
+
+---
+
+# 1) Arquitetura Geral
+
+```text
+Angular Frontend
+       ↓ HTTP(JSON)
+PHP Backend REST API
+       ↓
+MySQL Database
+       ↓
+External Crypto API
+```
+
+---
+
+# 2) Fluxo Geral do Sistema
+
+## Fluxo principal
+
+```text
+Utilizador → Login
+            ↓
+        Dashboard
+            ↓
+    Consulta moedas
+            ↓
+ Guarda na watchlist
+            ↓
+ Cria alertas
+            ↓
+ Exporta relatórios
+```
+
+---
+
+# 3) Estrutura Final do Projeto
+
+# 3.1 Frontend Angular
+
+```text
+frontend/
+│
+├── src/
+│   ├── app/
+│   │
+│   ├── core/
+│   │   ├── guards/
+│   │   ├── interceptors/
+│   │   ├── services/
+│   │   ├── layouts/
+│   │   └── models/
+│   │
+│   ├── shared/
+│   │   ├── components/
+│   │   │   ├── navbar/
+│   │   │   ├── sidebar/
+│   │   │   ├── footer/
+│   │   │   ├── loading-spinner/
+│   │   │   ├── crypto-card/
+│   │   │   ├── crypto-table/
+│   │   │   ├── chart-widget/
+│   │   │   ├── confirm-dialog/
+│   │   │   └── empty-state/
+│   │   │
+│   │   ├── pipes/
+│   │   ├── directives/
+│   │   └── utils/
+│   │
+│   ├── features/
+│   │   ├── auth/
+│   │   │   ├── login/
+│   │   │   ├── register/
+│   │   │   ├── forgot-password/
+│   │   │   └── reset-password/
+│   │   │
+│   │   ├── dashboard/
+│   │   ├── cryptocurrencies/
+│   │   ├── watchlist/
+│   │   ├── alerts/
+│   │   ├── reports/
+│   │   ├── settings/
+│   │   └── admin/
+│   │
+│   ├── assets/
+│   │   ├── i18n/
+│   │   │   ├── en.json
+│   │   │   └── pt.json
+│   │   └── images/
+│   │
+│   ├── environments/
+│   │
+│   └── styles/
+│
+├── angular.json
+└── package.json
+```
+
+---
+
+# 3.2 Backend PHP
+
+```text
+backend/
+│
+├── public/
+│   └── index.php
+│
+├── routes/
+│   ├── api.php
+│   └── web.php
+│
+├── app/
+│   │
+│   ├── Controllers/
+│   │   ├── AuthController.php
+│   │   ├── CryptoController.php
+│   │   ├── WatchlistController.php
+│   │   ├── AlertController.php
+│   │   ├── ReportController.php
+│   │   └── UserController.php
+│   │
+│   ├── Services/
+│   │   ├── AuthService.php
+│   │   ├── CryptoService.php
+│   │   ├── AlertService.php
+│   │   ├── ReportService.php
+│   │   └── ExportService.php
+│   │
+│   ├── Repositories/
+│   │   ├── UserRepository.php
+│   │   ├── CryptoRepository.php
+│   │   ├── WatchlistRepository.php
+│   │   ├── AlertRepository.php
+│   │   └── ReportRepository.php
+│   │
+│   ├── Models/
+│   │   ├── User.php
+│   │   ├── Cryptocurrency.php
+│   │   ├── Alert.php
+│   │   └── Watchlist.php
+│   │
+│   ├── Middleware/
+│   │   ├── AuthMiddleware.php
+│   │   ├── AdminMiddleware.php
+│   │   └── CorsMiddleware.php
+│   │
+│   ├── Validators/
+│   │
+│   ├── Helpers/
+│   │
+│   └── Config/
+│
+├── database/
+│   ├── migrations/
+│   └── seeds/
+│
+├── storage/
+│   ├── exports/
+│   └── logs/
+│
+├── vendor/
+│
+└── composer.json
+```
+
+---
+
+# 4) Organização Arquitetural
+
+## Frontend
+
+| Camada         | Responsabilidade  |
+| -------------- | ----------------- |
+| Components     | Interface visual  |
+| Services       | HTTP/API          |
+| Guards         | Proteção de rotas |
+| Models         | Tipagem           |
+| Pages/Features | Fluxos funcionais |
+| Shared         | Reutilização      |
+
+---
+
+## Backend
+
+| Camada       | Responsabilidade       |
+| ------------ | ---------------------- |
+| Controllers  | Receber requests       |
+| Services     | Regras de negócio      |
+| Repositories | SQL/acesso dados       |
+| Middleware   | Segurança/autorização  |
+| Models       | Estrutura de entidades |
+
+---
+
+# 5) Base de Dados Final
+
+# 5.1 users
+
+```sql
+CREATE TABLE users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(120) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('user', 'admin') DEFAULT 'user',
+    preferred_language VARCHAR(10) DEFAULT 'pt',
+    theme ENUM('light', 'dark') DEFAULT 'dark',
+    reset_token VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+# 5.2 cryptocurrencies
+
+```sql
+CREATE TABLE cryptocurrencies (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    symbol VARCHAR(20) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100),
+    logo_url TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+# 5.3 crypto_prices
+
+```sql
+CREATE TABLE crypto_prices (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    cryptocurrency_id INT NOT NULL,
+    price_usd DECIMAL(18,8),
+    market_cap BIGINT,
+    volume_24h BIGINT,
+    change_24h DECIMAL(10,2),
+    captured_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (cryptocurrency_id)
+    REFERENCES cryptocurrencies(id)
+    ON DELETE CASCADE
+);
+```
+
+---
+
+# 5.4 watchlists
+
+```sql
+CREATE TABLE watchlists (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    cryptocurrency_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE,
+
+    FOREIGN KEY (cryptocurrency_id)
+    REFERENCES cryptocurrencies(id)
+    ON DELETE CASCADE,
+
+    UNIQUE(user_id, cryptocurrency_id)
+);
+```
+
+---
+
+# 5.5 alerts
+
+```sql
+CREATE TABLE alerts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    cryptocurrency_id INT NOT NULL,
+    condition_type ENUM('above', 'below') NOT NULL,
+    target_price DECIMAL(18,8) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    triggered_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE,
+
+    FOREIGN KEY (cryptocurrency_id)
+    REFERENCES cryptocurrencies(id)
+    ON DELETE CASCADE
+);
+```
+
+---
+
+# 5.6 export_logs
+
+```sql
+CREATE TABLE export_logs (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    report_type VARCHAR(100),
+    format ENUM('csv', 'pdf'),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+);
+```
+
+---
+
+# 6) API REST — Endpoints
+
+# 6.1 Auth
+
+| Método | Endpoint                  | Função          |
+| ------ | ------------------------- | --------------- |
+| POST   | /api/auth/register        | Registo         |
+| POST   | /api/auth/login           | Login           |
+| POST   | /api/auth/logout          | Logout          |
+| POST   | /api/auth/forgot-password | Recuperar senha |
+| POST   | /api/auth/reset-password  | Reset senha     |
+
+---
+
+# 6.2 Users
+
+| Método | Endpoint            |
+| ------ | ------------------- |
+| GET    | /api/users/profile  |
+| PUT    | /api/users/profile  |
+| PUT    | /api/users/theme    |
+| PUT    | /api/users/language |
+
+---
+
+# 6.3 Cryptocurrencies
+
+| Método | Endpoint                          |
+| ------ | --------------------------------- |
+| GET    | /api/cryptocurrencies             |
+| GET    | /api/cryptocurrencies/:id         |
+| GET    | /api/cryptocurrencies/trending    |
+| GET    | /api/cryptocurrencies/top-gainers |
+| GET    | /api/cryptocurrencies/top-losers  |
+
+---
+
+# 6.4 Watchlist
+
+| Método | Endpoint           |
+| ------ | ------------------ |
+| GET    | /api/watchlist     |
+| POST   | /api/watchlist     |
+| DELETE | /api/watchlist/:id |
+
+---
+
+# 6.5 Alerts
+
+| Método | Endpoint        |
+| ------ | --------------- |
+| GET    | /api/alerts     |
+| POST   | /api/alerts     |
+| PUT    | /api/alerts/:id |
+| DELETE | /api/alerts/:id |
+
+---
+
+# 6.6 Reports
+
+| Método | Endpoint                |
+| ------ | ----------------------- |
+| GET    | /api/reports/export/csv |
+| GET    | /api/reports/export/pdf |
+
+---
+
+# 7) Fluxo de Comunicação Frontend ↔ Backend
+
+## Exemplo
+
+### Request
+
+```http
+GET /api/cryptocurrencies
+Authorization: Bearer TOKEN
+```
+
+---
+
+### Response JSON
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "price_usd": 103421.22,
+      "change_24h": 4.11
+    }
+  ]
+}
+```
+
+---
+
+# 8) Melhor Estratégia de Autenticação
+
+O PDF não obriga JWT, mas para Angular + PHP REST API a solução mais coerente é:
+
+## JWT Authentication
+
+Porque:
+
+* funciona muito bem com SPA Angular;
+* desacopla frontend/backend;
+* facilita APIs REST;
+* evita sessão PHP tradicional.
+
+Fluxo:
+
+```text
+Login
+→ backend gera JWT
+→ frontend guarda token
+→ interceptor adiciona Authorization header
+→ middleware valida token
+```
+
+---
+
+# 9) Melhor Estratégia de Atualização dos Dados
+
+## Estratégia recomendada
+
+### Backend:
+
+* consulta API externa;
+* guarda snapshot na BD;
+* expõe dados ao Angular.
+
+### Frontend:
+
+* consulta apenas o backend.
+
+Isto é melhor porque:
+
+* evita expor API key;
+* reduz rate limit;
+* centraliza regras;
+* melhora performance.
+
+---
+
+# 10) Estratégia de APIs Externas
+
+# API principal recomendada
+
+## [CoinGecko API](https://www.coingecko.com/en/api?utm_source=chatgpt.com)
+
+Motivos:
+
+* plano gratuito forte;
+* sem necessidade obrigatória de API key para endpoints básicos;
+* boa documentação;
+* mercado amplo;
+* histórico;
+* tendências;
+* dados estáveis.
+
+---
+
+# APIs opcionais
+
+## Notícias
+
+[CryptoPanic API](https://cryptopanic.com/developers/api/?utm_source=chatgpt.com)
+
+---
+
+## Conversão monetária
+
+[ExchangeRate API](https://www.exchangerate-api.com/?utm_source=chatgpt.com)
+
+---
+
+# 11) Dark Mode
+
+Implementação recomendada:
+
+```text
+html[data-theme="dark"]
+html[data-theme="light"]
+```
+
+Guardar preferência:
+
+* localStorage;
+* base de dados do utilizador.
+
+---
+
+# 12) Multi-idioma
+
+## Idiomas recomendados
+
+* Português
+* Inglês
+
+---
+
+## Biblioteca Angular
+
+[ngx-translate](https://ngx-translate.org/?utm_source=chatgpt.com)
+
+---
+
+## Estrutura
+
+```text
+assets/i18n/
+├── pt.json
+└── en.json
+```
+
+---
+
+# 13) Exportação CSV/PDF
+
+## CSV
+
+Mais simples e rápido.
+
+## PDF
+
+Melhor para apresentação.
+
+---
+
+## Backend
+
+Gerar:
+
+* relatório de watchlist;
+* preços;
+* alertas;
+* histórico.
+
+---
+
+# 14) Responsividade
+
+Breakpoints:
+
+| Dispositivo | Largura |
+| ----------- | ------- |
+| Mobile      | < 768px |
+| Tablet      | 768px   |
+| Desktop     | 1200px+ |
+
+---
+
+# 15) Navegação do Sistema
+
+```text
+Login/Register
+        ↓
+Dashboard
+ ├── Mercado
+ ├── Criptomoedas
+ ├── Watchlist
+ ├── Alertas
+ ├── Relatórios
+ └── Configurações
+```
+
+---
+
+# 16) Componentes Reutilizáveis Importantes
+
+| Componente       | Reutilização        |
+| ---------------- | ------------------- |
+| CryptoCard       | Dashboard/listagens |
+| CryptoTable      | Mercado/watchlist   |
+| ChartWidget      | Detalhes            |
+| ThemeToggle      | Global              |
+| LanguageSwitcher | Global              |
+| LoadingSpinner   | Global              |
+| ConfirmDialog    | CRUD                |
+| EmptyState       | Tabelas/listas      |
+
+---
+
+# 17) Funcionalidades CRUD
+
+| Entidade          | CRUD     |
+| ----------------- | -------- |
+| Watchlist         | Completo |
+| Alertas           | Completo |
+| Perfil utilizador | Completo |
+| Admin moedas      | Completo |
+
+---
+
+# 18) Melhor Estratégia de GitHub
+
+O PDF valoriza commits claros e evolução progressiva. 
+
+## Convenção recomendada
+
+```text
+feat:
+fix:
+refactor:
+style:
+docs:
+```
+
+---
+
+## Exemplo
+
+```text
+feat(auth): implement JWT login
+feat(dashboard): add market overview cards
+fix(alerts): correct alert trigger logic
+```
+
+---
+
+# 19) Documento Técnico Final
+
+O PDF pede documento técnico até 5 páginas. 
+
+Estrutura ideal:
+
+1. Introdução
+2. Objetivo do sistema
+3. Arquitetura
+4. Tecnologias
+5. Funcionalidades
+6. Estrutura BD
+7. APIs usadas
+8. Decisões técnicas
+9. Dificuldades
+10. Conclusão
+
+---
+
+# 20) O que NÃO fazer
+
+Para manter alinhamento forte com o lab:
+
+## Evitar:
+
+* lógica SQL dentro das views;
+* Angular sem modularização;
+* PHP monolítico;
+* código duplicado;
+* chamadas diretas da API externa no frontend;
+* autenticação insegura;
+* mistura de responsabilidades;
+* CSS desorganizado;
+* commits gigantes sem contexto.
+
+---
+
+# 21) Melhor Estratégia Geral para Tirar Boa Nota
+
+O lab claramente valoriza:
+
+* organização;
+* arquitetura;
+* separação de responsabilidades;
+* clareza;
+* evolução progressiva;
+* reutilização;
+* qualidade estrutural. 
+
+Então o melhor caminho NÃO é:
+
+* adicionar centenas de funcionalidades.
+
+O melhor caminho é:
+
+* poucas funcionalidades;
+* muito bem estruturadas;
+* código limpo;
+* arquitetura clara;
+* boa UX/UI;
+* commits organizados;
+* documentação consistente.

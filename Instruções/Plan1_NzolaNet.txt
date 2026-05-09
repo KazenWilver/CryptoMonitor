@@ -1,0 +1,664 @@
+Vou estruturar tudo de forma completa e organizada.
+
+---
+
+# Análise do Lab #04 + Estrutura Completa — Sistema de Monitoramento de Criptomoedas
+
+---
+
+## PARTE 1 — ANÁLISE DO LAB #04
+
+### 1.1 Contexto e Regras do Grupo
+| Item | Detalhe |
+|---|---|
+| Grupo | Máx. 4 elementos |
+| Total de sistemas | 8 (4 do conjunto 1 + 4 do conjunto 2) |
+| Responsabilidade | 1 sistema por elemento por conjunto |
+| Autoria | Evidenciada por histórico de commits no GitHub |
+| Colaboração | Permitida, mas com responsável principal identificado |
+
+**Sistema escolhido:** `Conjunto 1 → Sistema de Monitoramento de Criptomoedas`
+
+### 1.2 Requisitos Técnicos Obrigatórios (todos os sistemas)
+| # | Requisito | Notas |
+|---|---|---|
+| R1 | Autenticação completa | Registo, login, logout, recuperação de senha |
+| R2 | BD relacional ≥ 3 tabelas + CRUD | SQL |
+| R3 | ≥ 1 API externa | Aplicável — criptomoedas dependem de dados de mercado externos |
+| R4 | Interface responsiva | Mobile-first obrigatório |
+| R5 | Modo claro/escuro com alternância funcional | CSS themes + toggle |
+| R6 | Multi-idioma ≥ 2 línguas | PT + EN mínimo |
+| R7 | Exportação de dados (CSV ou PDF) | |
+
+### 1.3 Requisitos Condicionais (quando a natureza justifica)
+- **Distinção entre tipos de utilizadores** → ✅ Justificado: utilizador comum vs. administrador (gestão da plataforma)
+- **Permissões diferenciadas** → ✅ Justificado: admin gere utilizadores, user gere portfólio/alertas próprios
+
+### 1.4 Stack Obrigatória
+| Camada | Tecnologia |
+|---|---|
+| Frontend | Angular |
+| Backend | PHP puro (sem frameworks) |
+| Base de dados | SQL relacional |
+| Comunicação | HTTP requests → JSON responses |
+
+### 1.5 Critérios de Avaliação Extraídos
+1. Funcionamento dos sistemas
+2. Qualidade das funcionalidades
+3. Organização do código (separação de responsabilidades)
+4. Uso adequado de BD e APIs
+5. Qualidade da interface
+6. Clareza da autoria individual (commits)
+7. Consistência do versionamento
+
+### 1.6 Prazos
+| Fase | Data | Entrega |
+|---|---|---|
+| Fase 1 | 10 Mai 2026 | Sistemas do conjunto 1 (inclui este) |
+| Fase 2 | 17 Mai 2026 | Sistemas do conjunto 2 |
+| Final | Junto com Fase 2 | GitHub + scripts BD + doc técnico ≤ 5 páginas |
+
+> ⚠️ **ALERTA DE PRAZO**: A Fase 1 termina em **2 dias** (10 Mai 2026). O planeamento abaixo prioriza implementabilidade dentro do prazo.
+
+---
+
+## PARTE 2 — DECISÕES TÉCNICAS FUNDAMENTAIS
+
+### 2.1 APIs Externas — Análise e Escolha
+
+#### Candidatas avaliadas
+
+| API | Plano Gratuito | Auth | Limite Free | WebSocket | Dados Históricos | Recomendação |
+|---|---|---|---|---|---|---|
+| **CoinGecko** | ✅ Sim | Sem chave (básico) / API key (demo) | ~30 calls/min | ❌ | ✅ | **⭐ Primária** |
+| **CoinCap** | ✅ Sim | Sem chave | Ilimitado (fair use) | ✅ Sim | ✅ | **⭐ Secundária** |
+| Binance Public | ✅ Sim | Sem chave (public endpoints) | 1200 req/min | ✅ | ✅ | Complementar |
+| CryptoCompare | ✅ Sim | API key obrigatória | 100k calls/mês | ❌ | ✅ | Alternativa |
+| CoinMarketCap | ✅ Plano básico | API key | 10k calls/mês | ❌ | Limitado | Backup |
+
+#### Decisão:
+- **CoinGecko** → Dados de mercado, rankings, detalhes, histórico, trending, busca — o mais completo gratuitamente
+- **CoinCap WebSocket** → `wss://ws.coincap.io/prices?assets=bitcoin,ethereum,...` — preços em tempo real sem polling agressivo
+
+> O backend PHP faz as chamadas às APIs externas (proxy inteligente) para esconder chaves e gerir rate limiting. O Angular **nunca** chama as APIs externas diretamente.
+
+### 2.2 Web Scraping — Decisão
+
+**Não será utilizado.** Justificação:
+- CoinGecko e CoinCap cobrem 100% dos dados necessários via API oficial
+- Web scraping de CoinMarketCap, Binance.com violaria os seus ToS
+- APIs são mais estáveis, tipadas e respeitam os princípios do laboratório (integração com API externa)
+- Risco técnico desnecessário dado o prazo
+
+### 2.3 IA no Sistema — Decisão
+
+O Lab #04 menciona IA como **ferramenta de desenvolvimento** (Claude, Copilot), não como funcionalidade obrigatória no sistema. Porém, o utilizador questionou explicitamente.
+
+**Decisão: Implementar uma funcionalidade analítica com valor real, dentro do prazo:**
+
+| Funcionalidade | Abordagem | Praticidade |
+|---|---|---|
+| **Indicador de tendência** (Moving Average 7/30 dias) | Cálculo PHP sobre dados históricos da CoinGecko | ✅ Implementável em horas |
+| **Score de volatilidade** | Desvio padrão dos últimos N preços | ✅ |
+| Previsão de preço por ML | Requereria modelo treinado + infra | ❌ Fora do prazo |
+| Análise de sentimento de notícias | API NewsAPI + NLP externo | ⚠️ Possível, mas arriscado para o prazo |
+
+**Conclusão**: Incluir análise estatística (MA, volatilidade) que será apresentada como "análise inteligente de mercado" — tecnicamente honesto e implementável no prazo. É uma feature diferenciadora sem risco de prazo.
+
+---
+
+## PARTE 3 — ESTRUTURA COMPLETA DO PROJETO
+
+### 3.1 Organização de Pastas
+
+```
+crypto-monitor/
+├── backend/
+│   ├── config/
+│   │   ├── database.php          # Credenciais + instância PDO
+│   │   ├── cors.php              # Headers CORS
+│   │   └── app.php               # Constantes globais (JWT_SECRET, API keys)
+│   │
+│   ├── core/
+│   │   ├── Database.php          # Singleton PDO
+│   │   ├── Router.php            # Roteador HTTP simples
+│   │   ├── Request.php           # Abstração do request (body, headers, params)
+│   │   ├── Response.php          # Helpers JSON response (200, 401, 422, etc.)
+│   │   └── JWTHelper.php         # Encode/decode JWT sem lib externa
+│   │
+│   ├── middleware/
+│   │   ├── AuthMiddleware.php    # Valida JWT → injeta $user no request
+│   │   └── AdminMiddleware.php   # Verifica role = 'admin'
+│   │
+│   ├── models/                   # DATA ACCESS LAYER — apenas queries SQL
+│   │   ├── UserModel.php
+│   │   ├── WatchlistModel.php
+│   │   ├── PortfolioModel.php
+│   │   ├── AlertModel.php
+│   │   └── PasswordResetModel.php
+│   │
+│   ├── services/                 # BUSINESS LOGIC — regras, validações, orquestração
+│   │   ├── AuthService.php       # Hash, validação, token geração
+│   │   ├── CryptoService.php     # Chamadas CoinGecko + CoinCap, cache, rate limit
+│   │   ├── WatchlistService.php
+│   │   ├── PortfolioService.php  # Cálculo P&L, valor atual do portfólio
+│   │   ├── AlertService.php      # Lógica de trigger de alertas
+│   │   ├── ExportService.php     # Geração CSV e PDF
+│   │   ├── AnalyticsService.php  # Moving Average, volatilidade
+│   │   └── EmailService.php      # Envio de email (recuperação de senha)
+│   │
+│   ├── controllers/              # ENDPOINTS — recebe request, chama service, devolve response
+│   │   ├── AuthController.php
+│   │   ├── CryptoController.php
+│   │   ├── WatchlistController.php
+│   │   ├── PortfolioController.php
+│   │   ├── AlertController.php
+│   │   ├── ExportController.php
+│   │   ├── AnalyticsController.php
+│   │   └── AdminController.php
+│   │
+│   ├── helpers/
+│   │   ├── ValidationHelper.php  # Sanitização + validação de inputs
+│   │   └── CacheHelper.php       # Cache simples em ficheiro/APCu para API calls
+│   │
+│   ├── routes/
+│   │   └── api.php               # Mapeamento METHOD + URI → Controller::method
+│   │
+│   ├── exports/                  # PDFs/CSVs gerados temporariamente
+│   ├── logs/                     # Erros e logs de API
+│   ├── .htaccess                 # Rewrite all → index.php
+│   └── index.php                 # Entry point: config → cors → router
+│
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   │
+│   │   │   ├── core/                          # Singleton — importado só no AppModule
+│   │   │   │   ├── services/
+│   │   │   │   │   ├── auth.service.ts        # Login, register, JWT storage
+│   │   │   │   │   ├── crypto.service.ts      # Chamadas ao backend /api/crypto
+│   │   │   │   │   ├── theme.service.ts       # Light/dark toggle + localStorage
+│   │   │   │   │   ├── i18n.service.ts        # Carrega pt.json/en.json, translate()
+│   │   │   │   │   ├── portfolio.service.ts
+│   │   │   │   │   ├── watchlist.service.ts
+│   │   │   │   │   ├── alert.service.ts
+│   │   │   │   │   └── export.service.ts
+│   │   │   │   ├── guards/
+│   │   │   │   │   ├── auth.guard.ts          # Bloqueia rotas sem JWT válido
+│   │   │   │   │   └── admin.guard.ts         # Bloqueia rotas sem role=admin
+│   │   │   │   ├── interceptors/
+│   │   │   │   │   ├── auth.interceptor.ts    # Injeta Authorization: Bearer <token>
+│   │   │   │   │   └── error.interceptor.ts   # Trata 401 → logout, 500 → toast
+│   │   │   │   └── models/                    # TypeScript interfaces
+│   │   │   │       ├── user.model.ts
+│   │   │   │       ├── crypto.model.ts
+│   │   │   │       ├── portfolio.model.ts
+│   │   │   │       ├── alert.model.ts
+│   │   │   │       └── api-response.model.ts
+│   │   │   │
+│   │   │   ├── shared/                        # Componentes/pipes reutilizáveis
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── navbar/
+│   │   │   │   │   ├── sidebar/
+│   │   │   │   │   ├── crypto-card/           # Card de cripto (usado em dashboard, watchlist)
+│   │   │   │   │   ├── price-chart/           # Chart.js wrapper reutilizável
+│   │   │   │   │   ├── theme-toggle/          # Botão light/dark
+│   │   │   │   │   ├── lang-switcher/         # Dropdown PT/EN
+│   │   │   │   │   ├── loading-spinner/
+│   │   │   │   │   ├── toast-notification/
+│   │   │   │   │   ├── confirm-dialog/
+│   │   │   │   │   └── data-table/            # Tabela genérica com sort/filter
+│   │   │   │   ├── pipes/
+│   │   │   │   │   ├── currency-format.pipe.ts   # $45,123.45
+│   │   │   │   │   ├── percent-change.pipe.ts    # +2.34% (com cor)
+│   │   │   │   │   └── translate.pipe.ts         # {{ 'key' | translate }}
+│   │   │   │   └── shared.module.ts
+│   │   │   │
+│   │   │   ├── layouts/
+│   │   │   │   ├── main-layout/               # Navbar + Sidebar + Router-outlet
+│   │   │   │   │   └── main-layout.component.ts
+│   │   │   │   └── auth-layout/               # Apenas centrado, sem nav
+│   │   │   │       └── auth-layout.component.ts
+│   │   │   │
+│   │   │   ├── modules/                       # Feature modules (lazy loaded)
+│   │   │   │   │
+│   │   │   │   ├── auth/
+│   │   │   │   │   ├── login/
+│   │   │   │   │   ├── register/
+│   │   │   │   │   ├── forgot-password/
+│   │   │   │   │   ├── reset-password/
+│   │   │   │   │   └── auth.module.ts
+│   │   │   │   │
+│   │   │   │   ├── dashboard/
+│   │   │   │   │   ├── components/
+│   │   │   │   │   │   ├── market-overview/   # Top 20 cryptos tabela
+│   │   │   │   │   │   ├── trending-section/  # Trending coins CoinGecko
+│   │   │   │   │   │   ├── gainers-losers/    # Top gainers/losers 24h
+│   │   │   │   │   │   └── global-stats/      # Market cap total, BTC dominance
+│   │   │   │   │   ├── dashboard.component.ts
+│   │   │   │   │   └── dashboard.module.ts
+│   │   │   │   │
+│   │   │   │   ├── crypto-detail/
+│   │   │   │   │   ├── components/
+│   │   │   │   │   │   ├── price-header/
+│   │   │   │   │   │   ├── historical-chart/  # 1D/7D/30D/1Y selector
+│   │   │   │   │   │   ├── market-stats/      # Cap, volume, supply
+│   │   │   │   │   │   └── analytics-panel/   # MA, volatilidade
+│   │   │   │   │   └── crypto-detail.module.ts
+│   │   │   │   │
+│   │   │   │   ├── watchlist/
+│   │   │   │   │   ├── watchlist.component.ts
+│   │   │   │   │   └── watchlist.module.ts
+│   │   │   │   │
+│   │   │   │   ├── portfolio/
+│   │   │   │   │   ├── components/
+│   │   │   │   │   │   ├── portfolio-summary/  # Valor total, P&L
+│   │   │   │   │   │   ├── holdings-table/     # Cada cripto com valor atual
+│   │   │   │   │   │   └── transaction-form/   # Add buy/sell
+│   │   │   │   │   └── portfolio.module.ts
+│   │   │   │   │
+│   │   │   │   ├── alerts/
+│   │   │   │   │   ├── alerts-list/
+│   │   │   │   │   ├── alert-form/
+│   │   │   │   │   └── alerts.module.ts
+│   │   │   │   │
+│   │   │   │   ├── reports/
+│   │   │   │   │   ├── reports.component.ts   # Seleciona tipo + formato + exporta
+│   │   │   │   │   └── reports.module.ts
+│   │   │   │   │
+│   │   │   │   ├── settings/
+│   │   │   │   │   ├── profile/               # Nome, email, senha
+│   │   │   │   │   ├── preferences/           # Idioma, tema, moeda base
+│   │   │   │   │   └── settings.module.ts
+│   │   │   │   │
+│   │   │   │   └── admin/
+│   │   │   │       ├── user-management/
+│   │   │   │       ├── system-stats/
+│   │   │   │       └── admin.module.ts
+│   │   │   │
+│   │   │   ├── app-routing.module.ts
+│   │   │   ├── app.component.ts
+│   │   │   └── app.module.ts
+│   │   │
+│   │   ├── assets/
+│   │   │   ├── i18n/
+│   │   │   │   ├── pt.json
+│   │   │   │   └── en.json
+│   │   │   └── icons/
+│   │   │
+│   │   ├── environments/
+│   │   │   ├── environment.ts        # apiUrl: 'http://localhost/crypto-monitor/backend'
+│   │   │   └── environment.prod.ts
+│   │   │
+│   │   └── styles/
+│   │       ├── _variables.scss       # CSS custom properties (--color-primary, etc.)
+│   │       ├── _themes.scss          # [data-theme="light"] / [data-theme="dark"] vars
+│   │       ├── _typography.scss
+│   │       ├── _utilities.scss
+│   │       └── styles.scss           # @import de todos
+│   │
+│   ├── angular.json
+│   └── package.json
+│
+├── database/
+│   ├── schema.sql                    # CREATE TABLE scripts
+│   ├── seed.sql                      # Dados iniciais (admin user, exemplos)
+│   └── migrations/                   # Alterações incrementais (migration_001.sql, etc.)
+│
+├── docs/
+│   └── technical-document.pdf        # Doc técnico ≤ 5 páginas para entrega
+│
+└── README.md
+```
+
+---
+
+### 3.2 Base de Dados — Schema Completo
+
+**5 tabelas** (acima do mínimo de 3), normalizadas em 3NF:
+
+```sql
+-- ============================================================
+-- SCHEMA: crypto_monitor
+-- ============================================================
+
+CREATE DATABASE IF NOT EXISTS crypto_monitor
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE crypto_monitor;
+
+-- ------------------------------------------------------------
+-- T1: users
+-- ------------------------------------------------------------
+CREATE TABLE users (
+    id            INT           PRIMARY KEY AUTO_INCREMENT,
+    name          VARCHAR(100)  NOT NULL,
+    email         VARCHAR(150)  UNIQUE NOT NULL,
+    password_hash VARCHAR(255)  NOT NULL,
+    role          ENUM('admin','user') NOT NULL DEFAULT 'user',
+    language      VARCHAR(5)    NOT NULL DEFAULT 'pt',   -- 'pt' | 'en'
+    theme         VARCHAR(10)   NOT NULL DEFAULT 'light', -- 'light' | 'dark'
+    base_currency VARCHAR(10)   NOT NULL DEFAULT 'USD',
+    is_active     TINYINT(1)    NOT NULL DEFAULT 1,
+    created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
+                                ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ------------------------------------------------------------
+-- T2: password_reset_tokens
+-- ------------------------------------------------------------
+CREATE TABLE password_reset_tokens (
+    id         INT          PRIMARY KEY AUTO_INCREMENT,
+    user_id    INT          NOT NULL,
+    token      VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP    NOT NULL,
+    used       TINYINT(1)   NOT NULL DEFAULT 0,
+    created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- T3: watchlist
+-- ------------------------------------------------------------
+CREATE TABLE watchlist (
+    id            INT          PRIMARY KEY AUTO_INCREMENT,
+    user_id       INT          NOT NULL,
+    crypto_id     VARCHAR(100) NOT NULL, -- CoinGecko ID: 'bitcoin', 'ethereum'
+    crypto_symbol VARCHAR(20)  NOT NULL, -- 'BTC', 'ETH'
+    crypto_name   VARCHAR(100) NOT NULL,
+    added_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_user_crypto (user_id, crypto_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- T4: portfolio_transactions
+-- Cada registo = 1 transação (buy/sell). O portfólio atual
+-- é calculado dinamicamente via queries agregadas.
+-- ------------------------------------------------------------
+CREATE TABLE portfolio_transactions (
+    id               INT              PRIMARY KEY AUTO_INCREMENT,
+    user_id          INT              NOT NULL,
+    crypto_id        VARCHAR(100)     NOT NULL,
+    crypto_symbol    VARCHAR(20)      NOT NULL,
+    crypto_name      VARCHAR(100)     NOT NULL,
+    type             ENUM('buy','sell') NOT NULL,
+    quantity         DECIMAL(24, 10)  NOT NULL,
+    price_usd        DECIMAL(24, 10)  NOT NULL,  -- preço na hora da transação
+    transaction_date TIMESTAMP        NOT NULL,
+    notes            TEXT,
+    created_at       TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- T5: price_alerts
+-- ------------------------------------------------------------
+CREATE TABLE price_alerts (
+    id               INT              PRIMARY KEY AUTO_INCREMENT,
+    user_id          INT              NOT NULL,
+    crypto_id        VARCHAR(100)     NOT NULL,
+    crypto_symbol    VARCHAR(20)      NOT NULL,
+    condition_type   ENUM('above','below') NOT NULL,
+    target_price     DECIMAL(24, 10)  NOT NULL,
+    is_active        TINYINT(1)       NOT NULL DEFAULT 1,
+    triggered_at     TIMESTAMP        NULL,
+    created_at       TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- SEED: Admin padrão
+-- Password: Admin@123 (bcrypt)
+-- ------------------------------------------------------------
+INSERT INTO users (name, email, password_hash, role)
+VALUES ('Administrador', 'admin@cryptomonitor.ao',
+        '$2y$12$...hash_aqui...', 'admin');
+```
+
+**Relacionamentos:**
+```
+users (1) ──< password_reset_tokens (N)
+users (1) ──< watchlist (N)
+users (1) ──< portfolio_transactions (N)
+users (1) ──< price_alerts (N)
+```
+
+**Nota de normalização:** `crypto_id`, `crypto_symbol`, `crypto_name` são repetidos nas tabelas por design intencional — evita JOIN com tabela de cryptos (que seria volátil e exigiria sincronização com a API). Dados de mercado vêm sempre da API, dados de identidade da cripto são imutáveis após a transação. Está em 3NF dentro do contexto.
+
+---
+
+### 3.3 Endpoints da API REST (Backend)
+
+```
+# AUTH
+POST   /api/auth/register
+POST   /api/auth/login
+POST   /api/auth/logout              [Auth]
+POST   /api/auth/forgot-password
+POST   /api/auth/reset-password
+
+# PERFIL
+GET    /api/user/profile             [Auth]
+PUT    /api/user/profile             [Auth]
+PUT    /api/user/password            [Auth]
+
+# CRYPTO (proxy para CoinGecko/CoinCap)
+GET    /api/crypto/markets           [Auth] ?page=1&per_page=50&currency=usd
+GET    /api/crypto/trending          [Auth]
+GET    /api/crypto/global            [Auth]
+GET    /api/crypto/{id}              [Auth]
+GET    /api/crypto/{id}/history      [Auth] ?days=7
+GET    /api/crypto/{id}/analytics    [Auth] (MA7, MA30, volatilidade)
+GET    /api/crypto/search            [Auth] ?q=bitcoin
+
+# WATCHLIST
+GET    /api/watchlist                [Auth]
+POST   /api/watchlist                [Auth]
+DELETE /api/watchlist/{id}           [Auth]
+
+# PORTFÓLIO
+GET    /api/portfolio                [Auth]  (retorna holdings calculados + P&L)
+GET    /api/portfolio/transactions   [Auth]
+POST   /api/portfolio/transactions   [Auth]
+PUT    /api/portfolio/transactions/{id} [Auth]
+DELETE /api/portfolio/transactions/{id} [Auth]
+
+# ALERTAS
+GET    /api/alerts                   [Auth]
+POST   /api/alerts                   [Auth]
+PUT    /api/alerts/{id}              [Auth]
+DELETE /api/alerts/{id}              [Auth]
+
+# EXPORTAÇÃO
+GET    /api/export/portfolio?format=csv   [Auth]
+GET    /api/export/portfolio?format=pdf   [Auth]
+GET    /api/export/watchlist?format=csv   [Auth]
+GET    /api/export/transactions?format=csv [Auth]
+
+# ADMIN
+GET    /api/admin/users              [Auth + Admin]
+PUT    /api/admin/users/{id}         [Auth + Admin]
+DELETE /api/admin/users/{id}         [Auth + Admin]
+GET    /api/admin/stats              [Auth + Admin]
+```
+
+---
+
+### 3.4 Sistema de Navegação Angular
+
+```typescript
+// app-routing.module.ts
+const routes: Routes = [
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+
+  // Auth layout (sem navbar/sidebar)
+  {
+    path: 'auth',
+    component: AuthLayoutComponent,
+    children: [
+      { path: 'login',           loadChildren: () => import('./modules/auth/auth.module') },
+      { path: 'register',        loadChildren: ... },
+      { path: 'forgot-password', loadChildren: ... },
+      { path: 'reset-password/:token', loadChildren: ... },
+    ]
+  },
+
+  // Main layout (com navbar + sidebar) — protegido
+  {
+    path: '',
+    component: MainLayoutComponent,
+    canActivate: [AuthGuard],
+    children: [
+      { path: 'dashboard',   loadChildren: () => import('./modules/dashboard/...')    },
+      { path: 'crypto/:id',  loadChildren: () => import('./modules/crypto-detail/...') },
+      { path: 'watchlist',   loadChildren: () => import('./modules/watchlist/...')    },
+      { path: 'portfolio',   loadChildren: () => import('./modules/portfolio/...')    },
+      { path: 'alerts',      loadChildren: () => import('./modules/alerts/...')       },
+      { path: 'reports',     loadChildren: () => import('./modules/reports/...')      },
+      { path: 'settings',    loadChildren: () => import('./modules/settings/...')     },
+      {
+        path: 'admin',
+        canActivate: [AdminGuard],
+        loadChildren: () => import('./modules/admin/...')
+      },
+    ]
+  },
+
+  { path: '**', redirectTo: '/dashboard' }
+];
+```
+
+---
+
+### 3.5 Separação de Responsabilidades — Padrão Aplicado
+
+**Backend (PHP puro):**
+| Camada | Responsabilidade | Exemplo |
+|---|---|---|
+| `index.php` | Bootstrap: config, cors, router | Entry point único |
+| `Router` | Despacha METHOD+URI → Controller | `GET /api/crypto/markets → CryptoController::getMarkets` |
+| `Controller` | Valida input, chama Service, devolve JSON | Sem lógica de negócio |
+| `Service` | Lógica de negócio, orquestração, cálculos | P&L, MA, chamadas CoinGecko |
+| `Model` | Apenas queries PDO parametrizadas | `findByUserId($id)` |
+| `Middleware` | Cross-cutting: auth JWT, admin check | Antes do controller |
+
+**Frontend (Angular):**
+| Camada | Responsabilidade |
+|---|---|
+| `Component` | Template + interação UI. Delegam lógica ao service |
+| `Service` | Chamadas HTTP, estado partilhado (BehaviorSubject) |
+| `Guard` | Proteção de rotas |
+| `Interceptor` | Token injection, error handling global |
+| `Model/Interface` | Tipos TypeScript — contrato de dados |
+| `Pipe` | Formatação reutilizável (moeda, %, tradução) |
+| `Shared Components` | crypto-card, price-chart, data-table — zero lógica de negócio |
+
+---
+
+### 3.6 Funcionalidades por Módulo (Resumo Executivo)
+
+| Módulo | Funcionalidades principais | Req. Lab satisfeitos |
+|---|---|---|
+| **Auth** | Registo, Login, Logout, Recuperar senha (token email) | R1 |
+| **Dashboard** | Top 50 cryptos, trending, market cap global, gainers/losers | R3 |
+| **Crypto Detail** | Preço, chart histórico (1D/7D/30D/1Y), stats, MA7/MA30, volatilidade | R3 + IA analítica |
+| **Watchlist** | Add/remove favoritos, ver preços atuais em tempo real | R2 (CRUD) |
+| **Portfolio** | Registar compras/vendas, ver holdings, P&L total e por cripto | R2 (CRUD) |
+| **Alerts** | Criar alertas above/below, ver histórico de alertas disparados | R2 (CRUD) |
+| **Reports** | Exportar portfólio/transações/watchlist em CSV e PDF | R7 |
+| **Settings** | Tema (R5), idioma PT/EN (R6), perfil, password | R5, R6 |
+| **Admin** | Gerir utilizadores, ver stats da plataforma | Req. condicional |
+
+---
+
+### 3.7 Implementação Técnica de Requisitos Transversais
+
+**Modo claro/escuro (R5):**
+```scss
+// _themes.scss
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --text-primary: #0f172a;
+  --card-bg: #f8fafc;
+  --accent: #f7931a; // Bitcoin orange
+}
+[data-theme="dark"] {
+  --bg-primary: #0d1117;
+  --text-primary: #e6edf3;
+  --card-bg: #161b22;
+  --accent: #f7931a;
+}
+```
+```typescript
+// theme.service.ts
+setTheme(theme: 'light'|'dark') {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  // Persistir no backend via PUT /api/user/profile
+}
+```
+
+**Multi-idioma (R6):**
+```json
+// pt.json
+{ "dashboard.title": "Painel de Controlo", "nav.watchlist": "Lista de Favoritos" }
+// en.json  
+{ "dashboard.title": "Dashboard", "nav.watchlist": "Watchlist" }
+```
+```typescript
+// translate.pipe.ts
+transform(key: string): string {
+  return this.i18nService.translate(key);
+}
+// Uso: {{ 'dashboard.title' | translate }}
+```
+
+**Exportação CSV (R7)** — gerada no backend PHP:
+```php
+// ExportService.php
+header('Content-Type: text/csv');
+header('Content-Disposition: attachment; filename="portfolio_' . date('Y-m-d') . '.csv"');
+// fputcsv() com os dados do utilizador
+```
+
+**Exportação PDF (R7)** — usando `mPDF` ou `FPDF` (lib PHP pura sem Composer, ou com):
+> **Suposição explicitamente rotulada**: O lab diz "PHP puro" referindo-se à ausência de frameworks (Laravel, Symfony), não à proibição de libs auxiliares. FPDF não requer Composer e é um único ficheiro include. Se esta suposição for inválida, o PDF pode ser gerado no frontend Angular com `jsPDF`.
+
+---
+
+## PARTE 4 — VERIFICAÇÃO FINAL
+
+### Checklist de conformidade com Lab #04
+
+| Requisito | Status | Como implementado |
+|---|---|---|
+| R1 — Auth completa | ✅ | Módulo auth com 4 rotas, JWT no backend |
+| R2 — BD ≥ 3 tabelas + CRUD | ✅ | 5 tabelas, CRUD em watchlist/portfolio/alerts |
+| R3 — API externa | ✅ | CoinGecko (primária) + CoinCap WebSocket |
+| R4 — Interface responsiva | ✅ | Angular + SCSS com breakpoints |
+| R5 — Light/dark mode | ✅ | CSS custom properties + ThemeService |
+| R6 — Multi-idioma ≥ 2 | ✅ | PT + EN via i18n JSON + TranslatePipe |
+| R7 — Exportação CSV/PDF | ✅ | ExportService PHP + endpoints dedicados |
+| Cond. — Tipos de utilizador | ✅ | ENUM('admin','user') + AdminGuard |
+| Cond. — Permissões diferenciadas | ✅ | AdminMiddleware no backend, AdminGuard no frontend |
+| Stack Angular | ✅ | Frontend 100% Angular |
+| Stack PHP puro | ✅ | Sem frameworks, só PHP nativo + PDO |
+| Stack SQL relacional | ✅ | MySQL/MariaDB, 5 tabelas normalizadas |
+| Comunicação HTTP + JSON | ✅ | Todos endpoints devolvem JSON |
+| Componentes reutilizáveis | ✅ | SharedModule com 9+ componentes |
+| Módulos Angular | ✅ | Lazy loading por feature module |
+| Sep. interface/lógica/serviços | ✅ | Component / Service / Model separados |
+| Sep. negócio/dados/endpoints | ✅ | Controller / Service / Model no backend |
+| GitHub + commits progressivos | ⚠️ | A implementar — estrutura definida, execução é do programador |
+| Web scraping | ✅ (não usado) | APIs oficiais cobrem todos os dados necessários |
+| IA no sistema | ✅ (analítica) | MA7/MA30 + volatilidade via AnalyticsService |
+
+### Extrapolações indevidas — Nenhuma detectada
+Todos os requisitos, tecnologias e estruturas acima estão sustentados pelo Lab #04 ou explicitamente rotulados como suposições (caso do FPDF).
+
+### Item em atenção
+> ⚠️ **Prazo crítico**: A Fase 1 termina em **10 de Maio de 2026 (2 dias)**. Recomendo priorizar: Auth → Dashboard (API) → Watchlist → CRUD básico → Light/dark + i18n → Export CSV. Portfolio completo, alertas e admin podem ter MVP simplificado para a entrega da Fase 1 e ser refinados.
+
+---

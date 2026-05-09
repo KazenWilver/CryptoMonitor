@@ -1,0 +1,226 @@
+Com base na análise rigorosa do documento `Lab_4_Data_05_05_2026.pdf`, apresento a estruturação técnica, arquitetural e estratégica para o "Sistema de Monitoramento de Criptomoedas". A abordagem prioriza os pilares de Engenharia de Software exigidos: organização, manutenibilidade, separação de responsabilidades e cumprimento estrito dos requisitos obrigatórios.
+
+Dado que a data atual é 8 de maio de 2026 e o prazo de entrega do primeiro conjunto (onde este sistema se insere) é **10 de maio de 2026**, a arquitetura focará na máxima eficiência, modularidade e pragmatismo para garantir a entrega atempada e funcional.
+
+---
+
+### 1. Análise de Requisitos e Essência do Projeto (Lab #04)
+
+A essência do laboratório não é apenas construir um sistema que funcione, mas sim um software estruturalmente sólido e sustentável. As funcionalidades exatas são livres, desde que o sistema seja coerente e resolva um problema real.
+
+Requisitos Obrigatórios Extraídos:
+
+* 
+**Frontend:** Angular (Componentes reutilizáveis, módulos, serviços).
+
+
+* 
+**Backend:** PHP Puro (APIs RESTful, respostas JSON, lógica e dados separados).
+
+
+* 
+**Base de Dados:** Relacional (SQL), mínimo de 3 tabelas e operações CRUD.
+
+
+* 
+**Autenticação:** Registo, Login, Logout, Recuperação de senha.
+
+
+* 
+**Interface:** Responsiva, Light/Dark Mode (funcional), Multi-idioma (mínimo 2).
+
+
+* 
+**Integrações:** Pelo menos uma API Externa.
+
+
+* 
+**Exportação:** Dados em CSV ou PDF.
+
+
+* 
+**Gestão de Acessos:** Distinção de utilizadores e permissões, se aplicável.
+
+
+* 
+**Controlo de Versões:** GitHub com histórico claro de autoria individual.
+
+
+
+**Informação Ausente/Ambígua no Documento (Pressupostos Adotados):**
+
+* 
+*Gestão de Dependências no PHP:* O documento cita "PHP puro". Assumo que o uso do Composer para bibliotecas utilitárias (ex: JWT para autenticação, MPDF/DomPDF para PDFs) é permitido, desde que não se usem frameworks completas (como Laravel ou Symfony).
+
+
+* *Recuperação de Senha:* Como o envio de e-mails em PHP puro requer configurações de SMTP que podem falhar em ambiente de testes locais, assumirei uma implementação de geração de *token* seguro gravado na BD, com simulação de envio ou integração com uma API de e-mail (ex: Resend ou SendGrid).
+
+---
+
+### 2. Estrutura de Base de Dados (SQL Relacional)
+
+Para cumprir o requisito mínimo de 3 tabelas e operações CRUD , com distinção de utilizadores, aplicamos a 3ª Forma Normal (3FN):
+
+1. **Tabela `users**` (Autenticação e Perfis)
+* `id` (PK, INT, Auto Increment)
+* `name` (VARCHAR)
+* `email` (VARCHAR, UNIQUE)
+* `password_hash` (VARCHAR)
+* 
+`role` (ENUM: 'admin', 'user') -> Cumpre a distinção de utilizadores.
+
+
+* `reset_token` (VARCHAR, NULL)
+* `created_at` (TIMESTAMP)
+
+
+2. **Tabela `cryptocurrencies**` (Catálogo Local/Cache da API)
+* `id` (PK, INT, Auto Increment)
+* `api_id` (VARCHAR, ex: 'bitcoin') -> *Referência à API Externa.*
+* `symbol` (VARCHAR, ex: 'BTC')
+* `name` (VARCHAR)
+
+
+3. **Tabela `portfolios**` (Operações CRUD) -> *Permite ao utilizador criar a sua carteira/lista de alertas.*
+* `id` (PK, INT, Auto Increment)
+* `user_id` (FK, INT) -> *Relacionamento com `users`.*
+* `crypto_id` (FK, INT) -> *Relacionamento com `cryptocurrencies`.*
+* `amount_owned` (DECIMAL)
+* `alert_price` (DECIMAL, NULL)
+* `created_at` (TIMESTAMP)
+
+
+
+---
+
+### 3. Arquitetura do Backend (PHP Puro)
+
+A comunicação será via HTTP retornando apenas JSON. A organização garante a separação de responsabilidades exigida.
+
+**Organização de Diretórios (Backend):**
+
+```text
+/backend
+ ├── /config
+ │    └── database.php       # Conexão PDO (Singleton)
+ ├── /controllers            # Lógica de interface com endpoints
+ │    ├── AuthController.php
+ │    ├── PortfolioController.php
+ │    └── ExportController.php
+ ├── /models                 # Acesso a Dados (Active Record ou Data Mapper)
+ │    ├── User.php
+ │    ├── Crypto.php
+ │    └── Portfolio.php
+ ├── /services               # Lógica de negócio pesada e chamadas externas
+ │    ├── CryptoApiService.php
+ │    └── ExportService.php
+ ├── /core                   # Utilitários do sistema
+ │    ├── Router.php         # Roteador simples (Front Controller)
+ │    └── JwtAuth.php        # Gestão de tokens de sessão
+ ├── .htaccess               # Redirecionamento de todas as rotas para index.php
+ └── index.php               # Ponto de entrada único (Bootstrap)
+
+```
+
+**Estratégia Técnica:** O `index.php` recebe a requisição, o `Router` avalia o método HTTP e a URI, instanciando o `Controller` correto. O `Controller` consome o `Model` para BD e retorna `json_encode()`.
+
+---
+
+### 4. Arquitetura do Frontend (Angular)
+
+Exige-se separação entre interface, lógica e serviços, além de componentes reutilizáveis.
+
+**Organização de Diretórios (Frontend):**
+
+```text
+/frontend/src/app
+ ├── /core                   # Singletons, Guards, Interceptors (Lógica Global)
+ │    ├── /guards            # AuthGuard, AdminGuard
+ │    ├── /interceptors      # JwtInterceptor, ErrorInterceptor
+ │    └── /services          # AuthService, ThemeService, I18nService
+ ├── /shared                 # Componentes reutilizáveis (Interface Pura)
+ │    ├── /components        # navbar, footer, crypto-card, loader
+ │    └── /pipes             # currency-format, translate
+ ├── /features               # Módulos Funcionais (Lógica de Negócio UI)
+ │    ├── /auth              # login, register, password-recovery
+ │    ├── /dashboard         # vista geral do mercado
+ │    └── /portfolio         # CRUD da carteira do utilizador
+ ├── app-routing.module.ts
+ └── app.module.ts
+
+```
+
+**Navegação e Fluxo:**
+
+1. **Pública:** Login, Registo, Recuperação.
+2. 
+**Privada (User):** Dashboard (Lista de Cryptos consumidas da API), Carteira (CRUD - Adicionar moedas à lista de interesses, definir alertas), Exportar Carteira (CSV/PDF).
+
+
+3. 
+**Privada (Admin):** Visualizar estatísticas gerais do sistema e exportar lista de todos os utilizadores.
+
+
+
+---
+
+### 5. Decisões Estratégicas: APIs, Scraping e Inteligência Artificial
+
+**Qual API Externa Usar?**
+
+* **Abordagem Recomendada:** **CoinGecko API**.
+* 
+*Justificação:* O projeto exige a integração de uma API externa. A CoinGecko possui um plano gratuito extremamente generoso (não requer chave de API para endpoints básicos, limites altos de requests), dados precisos e documentação excelente. Cobre perfeitamente preços, volumes e variações de mercado.
+
+
+
+**Uso de Web Scraping:**
+
+* **Decisão:** **NÃO UTILIZAR.**
+* 
+*Justificação:* O documento exige explicitamente a integração com uma API externa ("Integração com pelo menos uma API externa" ). Web scraping introduz alta fragilidade (mudanças no DOM do site alvo quebram o sistema) e viola os princípios de sustentabilidade do software exigidos no laboratório. A API resolve o problema com rigor, limpeza e eficiência.
+
+
+
+**Uso de Inteligência Artificial:**
+
+* **No Processo de Desenvolvimento:** **OBRIGATÓRIO** e orientado. O lab indica que a IA deve ser usada como instrumento de apoio à escrita de código, aprendizagem e experimentação, exigindo que o código seja validado criticamente pelo grupo.
+
+
+* **Como Funcionalidade do Sistema:** **OPCIONAL**. O documento não exige que o sistema final contenha recursos de IA operacionais para o utilizador final. Contudo, devido à liberdade de funcionalidades, se houver tempo até ao dia 10 de maio, pode-se integrar a API da OpenAI ou Gemini no `CryptoApiService` do PHP para gerar um pequeno "Resumo de Sentimento de Mercado" com base nas variações de preço do dia. Se o tempo for escasso, **foque apenas no CRUD e Requisitos Obrigatórios**.
+
+
+
+---
+
+### 6. Checklist de Cumprimento do Lab_4
+
+* [x] Autenticação Completa (Registo, Login, Logout, Rec. Senha).
+
+
+* [x] BD Relacional com 3 tabelas (Users, Cryptos, Portfolios) e CRUD (Gerir Carteira).
+
+
+* [x] API Externa (CoinGecko).
+
+
+* [x] Interface Responsiva (Angular UI / Tailwind ou SCSS).
+
+
+* [x] Dark/Light Mode (Gerido por `ThemeService` no Angular).
+
+
+* [x] Multi-idioma (Angular i18n ou ngx-translate: PT e EN).
+
+
+* [x] Exportação (Botão "Exportar Relatório" em CSV/PDF consumindo o `ExportController` do PHP).
+
+
+* [x] Distinção de Tipos de Utilizador (Admin vs User na BD e Angular Guards).
+
+
+* [x] Arquitetura: Angular no front , PHP puro no back , comunicação REST HTTP JSON.
+
+
+
+Toda a arquitetura proposta está rigorosamente alinhada com as restrições do PDF. Dado o prazo (10 de maio), a recomendação principal é iniciar imediatamente pela infraestrutura do Backend (BD + API JWT de Login) e, paralelamente, os componentes base do Angular.

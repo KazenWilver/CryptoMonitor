@@ -1,0 +1,11 @@
+node_modules/
+vendor/
+.env
+storage/cache/
+storage/exports/
+storage/logs/
+*.cache
+.DS_Store
+Thumbs.db
+dist/
+.angular/
