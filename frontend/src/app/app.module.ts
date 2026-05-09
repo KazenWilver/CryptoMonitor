@@ -11,13 +11,15 @@ import { LayoutComponent } from './layout/layout.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { HeaderComponent } from './layout/header/header.component';
 import { SharedModule } from './shared/shared.module';
+import { ToastComponent } from './shared/toast/toast.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     LayoutComponent,
     SidebarComponent,
-    HeaderComponent
+    HeaderComponent,
+    ToastComponent
   ],
   imports: [
     BrowserModule,
@@ -34,3 +36,4 @@ import { SharedModule } from './shared/shared.module';
   bootstrap: [AppComponent]
 })
 export class AppModule {}
+

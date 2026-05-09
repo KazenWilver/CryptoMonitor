@@ -79,6 +79,11 @@ class Request {
         if ($auth && preg_match('/Bearer\s+(.+)$/i', $auth, $matches)) {
             return $matches[1];
         }
+        // Fallback: token via query string (para exports via window.open)
+        $queryToken = $this->getQuery('token');
+        if ($queryToken) {
+            return $queryToken;
+        }
         return null;
     }
 }

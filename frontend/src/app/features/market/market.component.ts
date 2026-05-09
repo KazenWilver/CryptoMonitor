@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { CryptoService } from '../../core/services/crypto.service';
 import { CryptoCoin } from '../../core/models/crypto.model';
 
@@ -31,7 +32,7 @@ import { CryptoCoin } from '../../core/models/crypto.model';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let coin of filteredCoins" [routerLink]="['/market', coin.id]" style="cursor:pointer">
+          <tr *ngFor="let coin of filteredCoins" [routerLink]="['/market', coin.id]" class="table-row-interactive">
             <td>
               <div class="flex items-center gap-8">
                 <span class="text-muted" style="width:24px">{{ coin.market_cap_rank }}</span>
@@ -64,6 +65,11 @@ import { CryptoCoin } from '../../core/models/crypto.model';
         </tbody>
       </table>
     </div>
+
+    <div class="empty-state" *ngIf="!loading && filteredCoins.length === 0">
+      <span style="font-size:48px">🔍</span>
+      <p>{{ 'common.noData' | translate }}</p>
+    </div>
   `,
   styles: [`
     :host { display: block; }
@@ -77,14 +83,27 @@ export class MarketComponent implements OnInit {
   loading = false;
   page = 1;
 
-  constructor(private crypto: CryptoService) {}
+  constructor(private crypto: CryptoService, private route: ActivatedRoute) {}
 
-  ngOnInit(): void { this.loadCoins(); }
+  ngOnInit(): void {
+    this.loadCoins();
+    this.route.queryParams.subscribe(params => {
+      if (params['q']) {
+        this.searchQuery = params['q'];
+        this.onSearch();
+      }
+    });
+  }
 
   loadCoins(): void {
     this.loading = true;
     this.crypto.getMarkets(this.page, 100).subscribe({
-      next: (data) => { this.coins = data; this.filteredCoins = data; this.loading = false; },
+      next: (data) => {
+        this.coins = data;
+        this.filteredCoins = data;
+        this.loading = false;
+        if (this.searchQuery) this.onSearch();
+      },
       error: () => { this.loading = false; }
     });
   }

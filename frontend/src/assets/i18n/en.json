@@ -55,7 +55,8 @@
     "trend": "Trend",
     "bullish": "Bullish",
     "bearish": "Bearish",
-    "neutral": "Neutral"
+    "neutral": "Neutral",
+    "additionalStats": "Additional Statistics"
   },
   "portfolio": {
     "title": "Portfolio",

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { environment } from '../../../environments/environment';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-reports',
@@ -10,31 +11,33 @@ import { environment } from '../../../environments/environment';
     </div>
 
     <div class="reports-grid">
-      <div class="card report-card">
+      <div class="card report-card card-hover-glow animate-fadeIn">
         <div class="report-icon">◆</div>
         <h5>{{ 'reports.portfolioReport' | translate }}</h5>
         <p class="text-muted">Exportar holdings e P&L do portfólio</p>
-        <div class="flex gap-8 mt-16">
-          <button class="btn btn-primary btn-sm" (click)="exportCSV('portfolio')">{{ 'reports.exportCSV' | translate }}</button>
-          <button class="btn btn-secondary btn-sm" (click)="exportPDF('portfolio')">{{ 'reports.exportPDF' | translate }}</button>
+        <div class="flex gap-8 mt-16 justify-center">
+          <button class="btn btn-primary btn-sm" (click)="exportReport('portfolio', 'csv')">{{ 'reports.exportCSV' | translate }}</button>
+          <button class="btn btn-secondary btn-sm" (click)="exportReport('portfolio', 'pdf')">{{ 'reports.exportPDF' | translate }}</button>
         </div>
       </div>
 
-      <div class="card report-card">
+      <div class="card report-card card-hover-glow animate-fadeIn" style="animation-delay:0.1s">
         <div class="report-icon">★</div>
         <h5>{{ 'reports.watchlistReport' | translate }}</h5>
         <p class="text-muted">Exportar lista de favoritos</p>
-        <div class="flex gap-8 mt-16">
-          <button class="btn btn-primary btn-sm" (click)="exportCSV('watchlist')">{{ 'reports.exportCSV' | translate }}</button>
+        <div class="flex gap-8 mt-16 justify-center">
+          <button class="btn btn-primary btn-sm" (click)="exportReport('watchlist', 'csv')">{{ 'reports.exportCSV' | translate }}</button>
+          <button class="btn btn-secondary btn-sm" (click)="exportReport('watchlist', 'pdf')">{{ 'reports.exportPDF' | translate }}</button>
         </div>
       </div>
 
-      <div class="card report-card">
+      <div class="card report-card card-hover-glow animate-fadeIn" style="animation-delay:0.2s">
         <div class="report-icon">▤</div>
         <h5>{{ 'reports.transactionsReport' | translate }}</h5>
         <p class="text-muted">Exportar histórico de transações</p>
-        <div class="flex gap-8 mt-16">
-          <button class="btn btn-primary btn-sm" (click)="exportCSV('transactions')">{{ 'reports.exportCSV' | translate }}</button>
+        <div class="flex gap-8 mt-16 justify-center">
+          <button class="btn btn-primary btn-sm" (click)="exportReport('transactions', 'csv')">{{ 'reports.exportCSV' | translate }}</button>
+          <button class="btn btn-secondary btn-sm" (click)="exportReport('transactions', 'pdf')">{{ 'reports.exportPDF' | translate }}</button>
         </div>
       </div>
     </div>
@@ -48,13 +51,18 @@ import { environment } from '../../../environments/environment';
 export class ReportsComponent {
   private apiUrl = environment.apiUrl;
 
-  exportCSV(type: string): void {
-    const token = localStorage.getItem('token');
-    window.open(`${this.apiUrl}/api/export/${type}?token=${token}`, '_blank');
-  }
+  constructor(private toast: ToastService) {}
 
-  exportPDF(type: string): void {
+  exportReport(type: string, format: string): void {
     const token = localStorage.getItem('token');
-    window.open(`${this.apiUrl}/api/export/${type}?format=pdf&token=${token}`, '_blank');
+    if (!token) {
+      this.toast.error('Sessão expirada. Por favor, faça login novamente.');
+      return;
+    }
+    const url = format === 'pdf'
+      ? `${this.apiUrl}/api/export/${type}?format=pdf&token=${token}`
+      : `${this.apiUrl}/api/export/${type}?token=${token}`;
+    this.toast.info(`A exportar ${type} em ${format.toUpperCase()}...`);
+    window.open(url, '_blank');
   }
 }

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -7,7 +8,10 @@ import { AuthService } from '../../core/services/auth.service';
   template: `
     <header class="app-header">
       <div class="header-search">
-        <input type="text" placeholder="{{ 'common.search' | translate }}..." class="search-input" />
+        <input type="text" [(ngModel)]="searchQuery"
+               (keydown.enter)="onSearch()"
+               placeholder="{{ 'common.search' | translate }}..."
+               class="search-input" />
       </div>
       <div class="header-right">
         <span class="user-name">{{ auth.currentUser?.name }}</span>
@@ -20,5 +24,13 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent {
-  constructor(public auth: AuthService) {}
+  searchQuery = '';
+
+  constructor(public auth: AuthService, private router: Router) {}
+
+  onSearch(): void {
+    if (this.searchQuery.trim()) {
+      this.router.navigate(['/market'], { queryParams: { q: this.searchQuery.trim() } });
+    }
+  }
 }
