@@ -22,31 +22,34 @@ class CryptoService {
         }
 
         $ch = curl_init();
+        
+        $headers = [
+            'Accept: application/json',
+            'User-Agent: CryptoMonitor/1.0',
+        ];
+        
+        // Adicionar API key se disponível
+        if (COINGECKO_API_KEY) {
+            $headers[] = 'x-cg-demo-api-key: ' . COINGECKO_API_KEY;
+        }
+        
         curl_setopt_array($ch, [
             CURLOPT_URL            => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => 15,
-            CURLOPT_HTTPHEADER     => [
-                'Accept: application/json',
-                'User-Agent: CryptoMonitor/1.0',
-            ],
+            CURLOPT_HTTPHEADER     => $headers,
+            CURLOPT_SSL_VERIFYPEER => false, // WAMP não inclui CA bundle
+            CURLOPT_SSL_VERIFYHOST => 0,
+            CURLOPT_FOLLOWLOCATION => true,
         ]);
-
-        // Adicionar API key se disponível
-        if (COINGECKO_API_KEY) {
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Accept: application/json',
-                'User-Agent: CryptoMonitor/1.0',
-                'x-cg-demo-api-key: ' . COINGECKO_API_KEY,
-            ]);
-        }
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
         curl_close($ch);
 
         if ($httpCode !== 200 || !$response) {
-            Response::error('Erro ao consultar API externa', 502);
+            Response::error('Erro ao consultar API externa: ' . ($curlError ?: "HTTP $httpCode"), 502);
         }
 
         $data = json_decode($response, true);

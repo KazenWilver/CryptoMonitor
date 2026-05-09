@@ -48,6 +48,19 @@ class Request {
                 $headers[strtolower($name)] = $value;
             }
         }
+        // Apache CGI strips Authorization — read from env var set by .htaccess
+        if (!isset($headers['authorization'])) {
+            if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+                $headers['authorization'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+            } elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+                $headers['authorization'] = $_SERVER['HTTP_AUTHORIZATION'];
+            } elseif (function_exists('apache_request_headers')) {
+                $apacheHeaders = apache_request_headers();
+                if (isset($apacheHeaders['Authorization'])) {
+                    $headers['authorization'] = $apacheHeaders['Authorization'];
+                }
+            }
+        }
         return $headers;
     }
 
