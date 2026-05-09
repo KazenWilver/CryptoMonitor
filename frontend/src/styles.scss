@@ -148,8 +148,14 @@ select { cursor: pointer; }
   font-size: 12px; font-weight: 500; color: var(--text-secondary);
   text-transform: uppercase; letter-spacing: 0.05em;
 }
+.form-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
 .form-error {
   font-size: 12px; color: var(--color-error);
+}
+.form-success {
+  font-size: 12px; color: var(--color-success); font-weight: 500;
 }
 
 /* --- CARDS --- */

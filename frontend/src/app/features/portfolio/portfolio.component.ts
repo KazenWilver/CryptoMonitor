@@ -83,22 +83,50 @@ import { PortfolioSummary, PortfolioTransaction } from '../../core/models/portfo
 
     <!-- Add Transaction Modal -->
     <div class="modal-backdrop" *ngIf="showModal" (click)="showModal = false">
-      <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal animate-fadeIn" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <h5>{{ 'portfolio.addTransaction' | translate }}</h5>
           <button class="btn btn-icon btn-ghost" (click)="showModal = false">✕</button>
         </div>
-        <div class="form-group"><label>Crypto ID (ex: bitcoin)</label><input [(ngModel)]="newTx.crypto_id" /></div>
-        <div class="form-group"><label>Símbolo</label><input [(ngModel)]="newTx.crypto_symbol" /></div>
-        <div class="form-group"><label>Nome</label><input [(ngModel)]="newTx.crypto_name" /></div>
         <div class="form-group">
-          <label>Tipo</label>
-          <select [(ngModel)]="newTx.type"><option value="buy">Buy</option><option value="sell">Sell</option></select>
+          <label>Crypto ID</label>
+          <input type="text" [(ngModel)]="newTx.crypto_id" placeholder="Ex: bitcoin, ethereum, solana" />
         </div>
-        <div class="form-group"><label>{{ 'portfolio.quantity' | translate }}</label><input type="number" [(ngModel)]="newTx.quantity" /></div>
-        <div class="form-group"><label>{{ 'portfolio.priceUsd' | translate }}</label><input type="number" [(ngModel)]="newTx.price_usd" /></div>
-        <div class="form-group"><label>{{ 'portfolio.date' | translate }}</label><input type="date" [(ngModel)]="newTx.transaction_date" /></div>
-        <div class="form-group"><label>{{ 'portfolio.notes' | translate }}</label><textarea [(ngModel)]="newTx.notes"></textarea></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ 'portfolio.holdings' | translate }}</label>
+            <input type="text" [(ngModel)]="newTx.crypto_symbol" placeholder="Ex: BTC" />
+          </div>
+          <div class="form-group">
+            <label>{{ 'auth.name' | translate }}</label>
+            <input type="text" [(ngModel)]="newTx.crypto_name" placeholder="Ex: Bitcoin" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>{{ 'portfolio.buy' | translate }} / {{ 'portfolio.sell' | translate }}</label>
+          <select [(ngModel)]="newTx.type">
+            <option value="buy">🟢 {{ 'portfolio.buy' | translate }}</option>
+            <option value="sell">🔴 {{ 'portfolio.sell' | translate }}</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>{{ 'portfolio.quantity' | translate }}</label>
+            <input type="number" [(ngModel)]="newTx.quantity" placeholder="0.00" step="any" />
+          </div>
+          <div class="form-group">
+            <label>{{ 'portfolio.priceUsd' | translate }}</label>
+            <input type="number" [(ngModel)]="newTx.price_usd" placeholder="0.00" step="any" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>{{ 'portfolio.date' | translate }}</label>
+          <input type="date" [(ngModel)]="newTx.transaction_date" />
+        </div>
+        <div class="form-group">
+          <label>{{ 'portfolio.notes' | translate }}</label>
+          <textarea [(ngModel)]="newTx.notes" placeholder="Notas opcionais..." rows="2"></textarea>
+        </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" (click)="showModal = false">{{ 'common.cancel' | translate }}</button>
           <button class="btn btn-primary" (click)="addTransaction()">{{ 'common.save' | translate }}</button>
