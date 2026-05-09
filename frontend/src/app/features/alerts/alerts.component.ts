@@ -4,6 +4,7 @@ import { PriceAlert } from '../../core/models/portfolio.model';
 
 @Component({
   selector: 'app-alerts',
+  standalone: false,
   template: `
     <div class="page-header">
       <h3 class="page-title">{{ 'alerts.title' | translate }}</h3>

@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-layout',
+  standalone: false,
   template: `
     <div class="app-layout">
       <app-sidebar></app-sidebar>

@@ -4,6 +4,7 @@ import { WatchlistItem } from '../../core/models/portfolio.model';
 
 @Component({
   selector: 'app-watchlist',
+  standalone: false,
   template: `
     <div class="page-header">
       <h3 class="page-title">{{ 'nav.watchlist' | translate }}</h3>

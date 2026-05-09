@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-admin',
+  standalone: false,
   template: `
     <div class="page-header">
       <h3 class="page-title">{{ 'nav.admin' | translate }}</h3>

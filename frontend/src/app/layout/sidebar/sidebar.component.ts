@@ -6,6 +6,7 @@ import { I18nService } from '../../core/services/i18n.service';
 
 @Component({
   selector: 'app-sidebar',
+  standalone: false,
   template: `
     <aside class="sidebar" [class.collapsed]="collapsed">
       <div class="sidebar-header">

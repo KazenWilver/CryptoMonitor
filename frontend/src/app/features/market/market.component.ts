@@ -4,6 +4,7 @@ import { CryptoCoin } from '../../core/models/crypto.model';
 
 @Component({
   selector: 'app-market',
+  standalone: false,
   template: `
     <div class="page-header">
       <h3 class="page-title">{{ 'nav.market' | translate }}</h3>

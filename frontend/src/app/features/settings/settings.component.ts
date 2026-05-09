@@ -7,6 +7,7 @@ import { I18nService } from '../../core/services/i18n.service';
 
 @Component({
   selector: 'app-settings',
+  standalone: false,
   template: `
     <div class="page-header">
       <h3 class="page-title">{{ 'settings.title' | translate }}</h3>

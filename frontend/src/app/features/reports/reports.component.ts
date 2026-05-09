@@ -3,6 +3,7 @@ import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-reports',
+  standalone: false,
   template: `
     <div class="page-header">
       <h3 class="page-title">{{ 'reports.title' | translate }}</h3>

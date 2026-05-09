@@ -5,6 +5,7 @@ import { WatchlistService } from '../../../core/services/watchlist.service';
 
 @Component({
   selector: 'app-coin-detail',
+  standalone: false,
   template: `
     <div *ngIf="coin">
       <div class="page-header">

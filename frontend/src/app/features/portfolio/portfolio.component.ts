@@ -4,6 +4,7 @@ import { PortfolioSummary, PortfolioTransaction } from '../../core/models/portfo
 
 @Component({
   selector: 'app-portfolio',
+  standalone: false,
   template: `
     <div class="page-header">
       <h3 class="page-title">{{ 'portfolio.title' | translate }}</h3>
@@ -43,7 +44,7 @@ import { PortfolioSummary, PortfolioTransaction } from '../../core/models/portfo
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let h of summary.holdings">
+          <tr *ngFor="let h of summary?.holdings">
             <td style="font-weight:500">{{ h.crypto_name }} <span class="metadata">({{ h.crypto_symbol }})</span></td>
             <td class="mono">{{ h.quantity | number:'1.4-8' }}</td>
             <td class="mono">\${{ h.current_price | number:'1.2-6' }}</td>

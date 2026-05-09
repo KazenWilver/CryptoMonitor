@@ -4,6 +4,7 @@ import { CryptoCoin } from '../../core/models/crypto.model';
 
 @Component({
   selector: 'app-dashboard',
+  standalone: false,
   template: `
     <div class="page-header">
       <h3 class="page-title">{{ 'dashboard.title' | translate }}</h3>
@@ -94,8 +95,8 @@ import { CryptoCoin } from '../../core/models/crypto.model';
               </td>
               <td>
                 <span class="chip" [ngClass]="{
-                  'chip-positive': coin.price_change_percentage_7d_in_currency > 0,
-                  'chip-negative': coin.price_change_percentage_7d_in_currency < 0,
+                  'chip-positive': (coin.price_change_percentage_7d_in_currency || 0) > 0,
+                  'chip-negative': (coin.price_change_percentage_7d_in_currency || 0) < 0,
                   'chip-neutral': !coin.price_change_percentage_7d_in_currency
                 }">
                   {{ coin.price_change_percentage_7d_in_currency | number:'1.2-2' }}%

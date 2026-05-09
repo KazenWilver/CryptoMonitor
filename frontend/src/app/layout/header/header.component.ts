@@ -3,6 +3,7 @@ import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-header',
+  standalone: false,
   template: `
     <header class="app-header">
       <div class="header-search">
