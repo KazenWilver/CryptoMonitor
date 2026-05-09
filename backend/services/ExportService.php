@@ -64,7 +64,6 @@ class ExportService {
         $html .= '.print-btn { background: #5E6AD2; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; font-size: 13px; cursor: pointer; margin-bottom: 20px; }';
         $html .= '.print-btn:hover { background: #4A56B8; }';
         $html .= '</style></head><body>';
-        $html .= '<button class="print-btn no-print" onclick="window.print()">⬇ Imprimir / Guardar como PDF</button>';
         $html .= "<h1>◈ $title</h1>";
         $html .= '<div class="subtitle">Gerado em: ' . date('d/m/Y H:i:s') . ' · ' . $totalRows . ' registos</div>';
         $html .= '<div class="summary"><strong>Relatório:</strong> ' . ucfirst($reportType) . ' · <strong>Formato:</strong> PDF · <strong>Total:</strong> ' . $totalRows . ' linhas</div>';
@@ -93,7 +92,7 @@ class ExportService {
 
         // Servir como HTML para impressão/guardar como PDF
         header('Content-Type: text/html; charset=UTF-8');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Disposition: inline; filename="' . $filename . '"');
         echo $html;
         exit;
     }

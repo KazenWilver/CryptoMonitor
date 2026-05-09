@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { ToastService } from '../../core/services/toast.service';
 
@@ -16,8 +17,8 @@ import { ToastService } from '../../core/services/toast.service';
         <h5>{{ 'reports.portfolioReport' | translate }}</h5>
         <p class="text-muted">Exportar holdings e P&L do portfólio</p>
         <div class="flex gap-8 mt-16 justify-center">
-          <button class="btn btn-primary btn-sm" (click)="exportReport('portfolio', 'csv')">{{ 'reports.exportCSV' | translate }}</button>
-          <button class="btn btn-secondary btn-sm" (click)="exportReport('portfolio', 'pdf')">{{ 'reports.exportPDF' | translate }}</button>
+          <button class="btn btn-primary btn-sm" (click)="downloadCSV('portfolio')">{{ 'reports.exportCSV' | translate }}</button>
+          <button class="btn btn-secondary btn-sm" (click)="printPDF('portfolio')" [disabled]="printing">{{ 'reports.exportPDF' | translate }}</button>
         </div>
       </div>
 
@@ -26,8 +27,8 @@ import { ToastService } from '../../core/services/toast.service';
         <h5>{{ 'reports.watchlistReport' | translate }}</h5>
         <p class="text-muted">Exportar lista de favoritos</p>
         <div class="flex gap-8 mt-16 justify-center">
-          <button class="btn btn-primary btn-sm" (click)="exportReport('watchlist', 'csv')">{{ 'reports.exportCSV' | translate }}</button>
-          <button class="btn btn-secondary btn-sm" (click)="exportReport('watchlist', 'pdf')">{{ 'reports.exportPDF' | translate }}</button>
+          <button class="btn btn-primary btn-sm" (click)="downloadCSV('watchlist')">{{ 'reports.exportCSV' | translate }}</button>
+          <button class="btn btn-secondary btn-sm" (click)="printPDF('watchlist')" [disabled]="printing">{{ 'reports.exportPDF' | translate }}</button>
         </div>
       </div>
 
@@ -36,8 +37,8 @@ import { ToastService } from '../../core/services/toast.service';
         <h5>{{ 'reports.transactionsReport' | translate }}</h5>
         <p class="text-muted">Exportar histórico de transações</p>
         <div class="flex gap-8 mt-16 justify-center">
-          <button class="btn btn-primary btn-sm" (click)="exportReport('transactions', 'csv')">{{ 'reports.exportCSV' | translate }}</button>
-          <button class="btn btn-secondary btn-sm" (click)="exportReport('transactions', 'pdf')">{{ 'reports.exportPDF' | translate }}</button>
+          <button class="btn btn-primary btn-sm" (click)="downloadCSV('transactions')">{{ 'reports.exportCSV' | translate }}</button>
+          <button class="btn btn-secondary btn-sm" (click)="printPDF('transactions')" [disabled]="printing">{{ 'reports.exportPDF' | translate }}</button>
         </div>
       </div>
     </div>
@@ -50,19 +51,61 @@ import { ToastService } from '../../core/services/toast.service';
 })
 export class ReportsComponent {
   private apiUrl = environment.apiUrl;
+  printing = false;
 
-  constructor(private toast: ToastService) {}
+  constructor(private http: HttpClient, private toast: ToastService) {}
 
-  exportReport(type: string, format: string): void {
+  downloadCSV(type: string): void {
     const token = localStorage.getItem('token');
-    if (!token) {
-      this.toast.error('Sessão expirada. Por favor, faça login novamente.');
-      return;
-    }
-    const url = format === 'pdf'
-      ? `${this.apiUrl}/api/export/${type}?format=pdf&token=${token}`
-      : `${this.apiUrl}/api/export/${type}?token=${token}`;
-    this.toast.info(`A exportar ${type} em ${format.toUpperCase()}...`);
-    window.open(url, '_blank');
+    if (!token) { this.toast.error('Sessão expirada.'); return; }
+    this.toast.info(`A exportar ${type} em CSV...`);
+    window.open(`${this.apiUrl}/api/export/${type}?token=${token}`, '_blank');
+  }
+
+  printPDF(type: string): void {
+    const token = localStorage.getItem('token');
+    if (!token) { this.toast.error('Sessão expirada.'); return; }
+
+    this.printing = true;
+    this.toast.info(`A gerar PDF de ${type}...`);
+
+    this.http.get(`${this.apiUrl}/api/export/${type}?format=pdf&token=${token}`, {
+      responseType: 'text'
+    }).subscribe({
+      next: (html: string) => {
+        this.printing = false;
+        // Criar iframe oculto, injetar HTML, acionar impressão
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.left = '-9999px';
+        iframe.style.top = '-9999px';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        document.body.appendChild(iframe);
+
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (doc) {
+          doc.open();
+          doc.write(html);
+          doc.close();
+          // Esperar que o conteúdo carregue e acionar impressão
+          iframe.onload = () => {
+            iframe.contentWindow?.print();
+            setTimeout(() => document.body.removeChild(iframe), 2000);
+          };
+          // Fallback se onload não dispara
+          setTimeout(() => {
+            try { iframe.contentWindow?.print(); } catch(e) {}
+            setTimeout(() => {
+              try { document.body.removeChild(iframe); } catch(e) {}
+            }, 2000);
+          }, 500);
+        }
+      },
+      error: () => {
+        this.printing = false;
+        this.toast.error('Erro ao gerar PDF');
+      }
+    });
   }
 }
