@@ -6,7 +6,7 @@ Sistema completo de monitoramento de criptomoedas com dashboard em tempo real, p
 
 | Camada | Tecnologia |
 |---|---|
-| **Frontend** | Angular 19, SCSS, TypeScript |
+| **Frontend** | Angular 19, SCSS, TypeScript, Chart.js |
 | **Backend** | PHP Puro (sem frameworks), PDO |
 | **Base de Dados** | MySQL 8.4 |
 | **Servidor** | WAMP (Apache + MySQL + PHP) |
@@ -25,20 +25,21 @@ Sistema completo de monitoramento de criptomoedas com dashboard em tempo real, p
 | R3 | Integração com pelo menos uma API externa | ✅ (CoinGecko API — 7 endpoints) |
 | R4 | Interface responsiva | ✅ |
 | R5 | Implementação de modo claro e modo escuro com alternância funcional | ✅ |
-| R6 | Suporte a múltiplos idiomas (mínimo duas línguas) | ✅ (PT + EN) |
+| R6 | Suporte a múltiplos idiomas (mínimo duas línguas) | ✅ (7 idiomas: PT, EN, ES, FR, ZH, HI, JA) |
 | R7 | Funcionalidade de exportação de dados ou relatórios (CSV ou PDF) | ✅ |
 
 ### Funcionalidades Detalhadas
 
 - **Autenticação**: Registo, Login, Logout, Recuperação de password (JWT stateless)
 - **Dashboard**: Market cap global, trending coins, top 20 por market cap
-- **Mercado**: Listagem completa de 100+ criptomoedas, pesquisa, detalhe com stats
-- **Watchlist**: Adicionar/remover favoritos (CRUD)
+- **Mercado**: Listagem completa de 100+ criptomoedas, pesquisa global, detalhe com gráficos interativos (Chart.js)
+- **Watchlist**: Adicionar/remover favoritos (CRUD) com notificações toast
 - **Portfólio**: Registar transações buy/sell, holdings com P&L em tempo real
 - **Alertas**: Criar alertas above/below com preço alvo (CRUD)
 - **Análise**: Média Móvel 7D/30D, Volatilidade, Tendência (bullish/bearish/neutral)
 - **Relatórios**: Exportação em CSV e PDF (portfólio, watchlist, transações)
-- **Configurações**: Dark/Light mode, Português/English, perfil, password
+- **Configurações**: Dark/Light mode, 7 idiomas (🇧🇷 PT, 🇬🇧 EN, 🇪🇸 ES, 🇫🇷 FR, 🇨🇳 ZH, 🇮🇳 HI, 🇯🇵 JA), perfil, password
+- **Notificações**: Sistema de toast global (sucesso/erro/aviso) em todas as ações
 - **Admin**: Gestão de utilizadores, estatísticas da plataforma
 
 ## Estrutura do Projeto
