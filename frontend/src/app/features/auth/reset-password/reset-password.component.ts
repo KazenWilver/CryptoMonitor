@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { AlertService } from '../../../core/services/alert.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -73,8 +72,7 @@ export class ResetPasswordComponent implements OnInit {
     private fb: FormBuilder, 
     private auth: AuthService, 
     private router: Router,
-    private route: ActivatedRoute,
-    private alertService: AlertService
+    private route: ActivatedRoute
   ) {
     this.form = this.fb.group({
       token: ['', [Validators.required]],
@@ -104,7 +102,6 @@ export class ResetPasswordComponent implements OnInit {
       next: (res) => {
         this.loading = false;
         this.successMessage = res.message || 'Senha alterada com sucesso!';
-        this.alertService.success('Senha alterada com sucesso! Faça login.');
       },
       error: (err) => {
         this.loading = false;

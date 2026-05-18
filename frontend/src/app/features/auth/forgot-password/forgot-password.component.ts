@@ -2,7 +2,6 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-import { AlertService } from '../../../core/services/alert.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -68,8 +67,7 @@ export class ForgotPasswordComponent {
   constructor(
     private fb: FormBuilder, 
     private auth: AuthService, 
-    private router: Router,
-    private alertService: AlertService
+    private router: Router
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]]
