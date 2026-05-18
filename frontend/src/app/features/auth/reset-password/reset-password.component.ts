@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -16,9 +16,9 @@ import { AuthService } from '../../../core/services/auth.service';
         </div>
 
         <div *ngIf="successMessage" class="alert alert-success" style="margin-bottom: 20px; text-align: center;">
-          {{ successMessage }}
-          <br><br>
-          <a routerLink="/auth/login" class="btn btn-primary">Ir para Login</a>
+          <p style="font-weight: bold; margin-bottom: 10px;">{{ successMessage }}</p>
+          <p class="text-sm text-muted" style="margin-bottom: 20px;">Você será redirecionado para a tela de login em {{ countdown }} segundos...</p>
+          <button (click)="goToLogin()" class="btn btn-primary w-full">Ir para a Tela de Login Agora</button>
         </div>
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!successMessage">
@@ -61,12 +61,14 @@ import { AuthService } from '../../../core/services/auth.service';
   `,
   styleUrls: ['../login/login.component.scss']
 })
-export class ResetPasswordComponent implements OnInit {
+export class ResetPasswordComponent implements OnInit, OnDestroy {
   form: FormGroup;
   loading = false;
   error = '';
   shakeError = false;
   successMessage = '';
+  countdown = 10;
+  private countdownInterval: any;
 
   constructor(
     private fb: FormBuilder, 
@@ -89,6 +91,12 @@ export class ResetPasswordComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
+  }
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -102,6 +110,7 @@ export class ResetPasswordComponent implements OnInit {
       next: (res) => {
         this.loading = false;
         this.successMessage = res.message || 'Senha alterada com sucesso!';
+        this.startCountdown();
       },
       error: (err) => {
         this.loading = false;
@@ -109,6 +118,23 @@ export class ResetPasswordComponent implements OnInit {
         this.triggerShake();
       }
     });
+  }
+
+  startCountdown(): void {
+    this.countdown = 10;
+    this.countdownInterval = setInterval(() => {
+      this.countdown--;
+      if (this.countdown <= 0) {
+        this.goToLogin();
+      }
+    }, 1000);
+  }
+
+  goToLogin(): void {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
+    this.router.navigate(['/auth/login']);
   }
 
   private triggerShake(): void {

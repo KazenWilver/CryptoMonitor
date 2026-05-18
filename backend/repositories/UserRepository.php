@@ -75,11 +75,11 @@ class UserRepository {
     }
 
     // Password Reset
-    public function createResetToken(int $userId, string $token, string $expiresAt): int {
+    public function createResetToken(int $userId, string $token): int {
         $stmt = $this->db->prepare(
-            "INSERT INTO password_resets (user_id, token, expires_at) VALUES (:user_id, :token, :expires_at)"
+            "INSERT INTO password_resets (user_id, token, expires_at) VALUES (:user_id, :token, DATE_ADD(NOW(), INTERVAL 1 HOUR))"
         );
-        $stmt->execute(['user_id' => $userId, 'token' => $token, 'expires_at' => $expiresAt]);
+        $stmt->execute(['user_id' => $userId, 'token' => $token]);
         return (int) $this->db->lastInsertId();
     }
 
