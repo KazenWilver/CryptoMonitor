@@ -23,7 +23,11 @@
     "loginTitle": "Sign In",
     "registerTitle": "Create Account",
     "loginSuccess": "Login successful",
-    "registerSuccess": "Account created successfully"
+    "registerSuccess": "Account created successfully",
+    "sendInstructions": "Send Instructions",
+    "backToLogin": "Back to Login",
+    "resetPasswordBtn": "Reset Password",
+    "newPassword": "New Password"
   },
   "dashboard": {
     "title": "Dashboard",

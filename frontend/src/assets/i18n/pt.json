@@ -23,7 +23,11 @@
     "loginTitle": "Iniciar Sessão",
     "registerTitle": "Criar Conta",
     "loginSuccess": "Login efetuado com sucesso",
-    "registerSuccess": "Conta criada com sucesso"
+    "registerSuccess": "Conta criada com sucesso",
+    "sendInstructions": "Enviar Instruções",
+    "backToLogin": "Voltar ao Login",
+    "resetPasswordBtn": "Redefinir Senha",
+    "newPassword": "Nova Senha"
   },
   "dashboard": {
     "title": "Painel de Controlo",
