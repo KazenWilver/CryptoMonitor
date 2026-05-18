@@ -59,9 +59,9 @@ class AuthService {
         ];
     }
 
-    public function forgotPassword(string $email): bool {
+    public function forgotPassword(string $email): ?string {
         $user = $this->userRepo->findByEmail($email);
-        if (!$user) return true; // Não revelar se email existe
+        if (!$user) return null; // Não revelar se email existe
 
         $token = bin2hex(random_bytes(32));
         $expiresAt = date('Y-m-d H:i:s', time() + 3600); // 1 hora
@@ -70,7 +70,7 @@ class AuthService {
 
         // Em produção: enviar email com link contendo o token
         // Para ambiente de desenvolvimento: o token é retornado na resposta
-        return true;
+        return $token;
     }
 
     public function resetPassword(string $token, string $newPassword): bool {

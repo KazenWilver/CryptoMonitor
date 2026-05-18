@@ -45,8 +45,8 @@ export class AuthService {
     );
   }
 
-  forgotPassword(email: string): Observable<ApiResponse<null>> {
-    return this.http.post<ApiResponse<null>>(`${this.apiUrl}/forgot-password`, { email });
+  forgotPassword(email: string): Observable<ApiResponse<{reset_token: string}>> {
+    return this.http.post<ApiResponse<{reset_token: string}>>(`${this.apiUrl}/forgot-password`, { email });
   }
 
   resetPassword(token: string, password: string): Observable<ApiResponse<null>> {

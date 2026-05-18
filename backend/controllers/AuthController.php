@@ -49,8 +49,11 @@ class AuthController {
         if (empty($body['email'])) {
             Response::validationError('Email é obrigatório');
         }
-        $this->service->forgotPassword($body['email']);
-        Response::success(null, 'Se o email existir, receberá instruções de recuperação');
+        $token = $this->service->forgotPassword($body['email']);
+        $message = 'Se o email existir, receberá instruções de recuperação';
+        
+        // Em dev env, retornar token na payload.
+        Response::success(['reset_token' => $token], $message);
     }
 
     public function resetPassword(Request $request): void {

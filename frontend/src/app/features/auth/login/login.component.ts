@@ -50,7 +50,8 @@ import { AuthService } from '../../../core/services/auth.service';
           </button>
         </form>
 
-        <div class="auth-footer">
+        <div class="auth-footer" style="display: flex; flex-direction: column; gap: 10px;">
+          <a routerLink="/auth/forgot-password">{{ 'auth.forgotPassword' | translate }}</a>
           <a routerLink="/auth/register">{{ 'auth.noAccount' | translate }}</a>
         </div>
       </div>
